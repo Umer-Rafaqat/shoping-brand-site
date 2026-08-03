@@ -4,9 +4,21 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
-      // Design was authored on a 1440px canvas. We treat 1440 as the max
-      // content width and let everything scale down in % below that,
-      // instead of hardcoding px widths — this is what keeps it responsive.
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      
       maxWidth: {
         container: "1440px",
       },

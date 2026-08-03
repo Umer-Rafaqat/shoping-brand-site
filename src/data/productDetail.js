@@ -1,6 +1,4 @@
-// Placeholder gallery photos live in src/assets/product-detail/*.jpg —
-// replace each file with the real product shot (keep the same filename)
-// and this page needs no other changes.
+
 import mainImg from "../assets/product-detail/main.png";
 
 import thumb2 from "../assets/product-detail/thumb-2.png";

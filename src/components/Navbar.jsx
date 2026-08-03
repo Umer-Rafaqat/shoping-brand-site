@@ -73,7 +73,7 @@ export default function Navbar() {
             {links.map((link) => (
               <a
                 key={link.label}
-                href="#"
+               href={link.label === "Shop" ? "/category/casual" : "#"}
                 className="flex items-center gap-1 font-satoshi text-sm"
               >
                 {link.label}
@@ -122,7 +122,7 @@ export default function Navbar() {
             {links.map((link) => (
               <a
                 key={link.label}
-                href="#"
+                href={link.label === "Shop" ? "/category/casual" : "#"}
                 className="flex items-center justify-between text-base font-medium"
               >
                 {link.label}
