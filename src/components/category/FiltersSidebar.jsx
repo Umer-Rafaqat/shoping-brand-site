@@ -9,10 +9,23 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { categories, colorSwatches, sizes, dressStyleFilters } from "@/data/filters";
+import {
+  categories,
+  colorSwatches,
+  sizes,
+  dressStyleFilters,
+} from "@/data/filters";
 
-export default function FiltersSidebar({ filters, onChange, onApply, isOpen, onClose, className }) {
-  const { priceRange, selectedColors, selectedSizes, selectedDressStyles } = filters;
+export default function FiltersSidebar({
+  filters,
+  onChange,
+  onApply,
+  isOpen,
+  onClose,
+  className,
+}) {
+  const { priceRange, selectedColors, selectedSizes, selectedDressStyles } =
+    filters;
   const [localPrice, setLocalPrice] = useState(priceRange);
 
   const toggleInArray = (arr, value) =>
@@ -24,7 +37,7 @@ export default function FiltersSidebar({ filters, onChange, onApply, isOpen, onC
         "fixed inset-y-0 left-0 z-50 w-[85%] max-w-sm overflow-y-auto bg-white p-5 transition-transform duration-300 ease-out",
         isOpen ? "translate-x-0" : "-translate-x-full",
         "lg:static lg:z-auto lg:w-[295px] lg:max-w-none lg:translate-x-0 lg:overflow-visible lg:rounded-2xl lg:border lg:border-black/10",
-        className
+        className,
       )}
     >
       <div className="flex items-center justify-between pb-4">
@@ -155,7 +168,10 @@ export default function FiltersSidebar({ filters, onChange, onApply, isOpen, onC
                     onClick={() =>
                       onChange({
                         ...filters,
-                        selectedDressStyles: toggleInArray(selectedDressStyles, style),
+                        selectedDressStyles: toggleInArray(
+                          selectedDressStyles,
+                          style,
+                        ),
                       })
                     }
                     className={`flex items-center justify-between py-2.5 font-satoshi text-sm ${

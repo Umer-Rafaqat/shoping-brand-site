@@ -1,7 +1,5 @@
 import { X } from "lucide-react";
 
-// Figma: width 1440 / height 38 -> full-width bar, height driven by
-// vertical padding so it stays correct at any viewport width.
 export default function AnnouncementBar() {
   return (
     <div className="relative w-full bg-black py-2.5 text-center">

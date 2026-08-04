@@ -23,7 +23,9 @@ export default function CategoryHeader({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <h1 className="font-integral text-2xl font-bold sm:text-3xl">{title}</h1>
+        <h1 className="font-integral text-2xl font-bold sm:text-3xl">
+          {title}
+        </h1>
         <span className="font-satoshi text-xs text-black/50 lg:hidden">
           {countText}
         </span>
@@ -40,7 +42,9 @@ export default function CategoryHeader({
         </button>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <span className="font-satoshi text-sm text-black/50">{countText}</span>
+          <span className="font-satoshi text-sm text-black/50">
+            {countText}
+          </span>
           <span className="text-black/20">|</span>
 
           <div className="relative">
@@ -54,13 +58,20 @@ export default function CategoryHeader({
               Sort by: <span className="font-medium">{selectedSort}</span>
               <ChevronDown
                 size={14}
-                className={sortOpen ? "rotate-180 transition-transform" : "transition-transform"}
+                className={
+                  sortOpen
+                    ? "rotate-180 transition-transform"
+                    : "transition-transform"
+                }
               />
             </button>
 
             {sortOpen && (
               <>
-                <div className="fixed inset-0 z-20" onClick={() => setSortOpen(false)} />
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setSortOpen(false)}
+                />
                 <ul
                   role="listbox"
                   className="absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-2xl border border-black/10 bg-white py-1 shadow-lg"

@@ -4,9 +4,6 @@ import gucciLogo from "../assets/brands/gucci.png";
 import pradaLogo from "../assets/brands/prada.png";
 import calvinKleinLogo from "../assets/brands/calvinklein.png";
 
-// Placeholder logos live in src/assets/brands/*.svg — replace each file
-// with the real brand asset (keep the same filename, or update the
-// import above) and this section needs no other changes.
 const brandLogos = [
   { name: "Versace", src: versaceLogo },
   { name: "Zara", src: zaraLogo },
@@ -15,8 +12,6 @@ const brandLogos = [
   { name: "Calvin Klein", src: calvinKleinLogo },
 ];
 
-// Figma: width 1440 / height 122 -> full-width strip, height driven by
-// padding (py-8/py-10) so it scales with content instead of a fixed px value.
 export default function BrandsStrip() {
   return (
     <section className="w-full bg-black">

@@ -24,7 +24,7 @@ const DEFAULT_FILTERS = {
 export default function Category() {
   // Draft filters reflect what's on the sidebar right now; appliedFilters
   // is what actually filters the grid, and only updates on "Apply Filter"
-  // — matches the Figma's explicit apply-button flow.
+
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +43,10 @@ export default function Category() {
     return categoryProducts.filter((p) => p.price >= min && p.price <= max);
   }, [appliedFilters]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / PAGE_SIZE),
+  );
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const pageProducts = filteredProducts.slice(pageStart, pageStart + PAGE_SIZE);
 
@@ -87,12 +90,21 @@ export default function Category() {
             <CategoryHeader
               title="Casual"
               showingFrom={filteredProducts.length === 0 ? 0 : pageStart + 1}
-              showingTo={Math.min(pageStart + PAGE_SIZE, filteredProducts.length)}
+              showingTo={Math.min(
+                pageStart + PAGE_SIZE,
+                filteredProducts.length,
+              )}
               total={filteredProducts.length}
               onOpenFilters={() => setIsFiltersOpen(true)}
             />
 
-            <SelectedFilters filters={appliedFilters} onChange={(f) => { setFilters(f); setAppliedFilters(f); }} />
+            <SelectedFilters
+              filters={appliedFilters}
+              onChange={(f) => {
+                setFilters(f);
+                setAppliedFilters(f);
+              }}
+            />
 
             {pageProducts.length > 0 ? (
               <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
@@ -116,8 +128,8 @@ export default function Category() {
       </div>
 
       <div className="-mb-20 relative z-10">
-    <Newsletter />
-  </div>
+        <Newsletter />
+      </div>
       <Footer />
     </div>
   );

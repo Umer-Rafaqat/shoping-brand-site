@@ -11,15 +11,12 @@ export default function TopSelling() {
         </h2>
 
         <div className="mt-10 flex gap-4 overflow-x-auto pb-2 hide-scrollbar lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible">
-  {topSelling.map((p) => (
-    <div
-      key={p.id}
-      className="w-[220px] shrink-0 lg:w-auto"
-    >
-      <ProductCard product={p} />
-    </div>
-  ))}
-</div>
+          {topSelling.map((p) => (
+            <div key={p.id} className="w-[220px] shrink-0 lg:w-auto">
+              <ProductCard product={p} />
+            </div>
+          ))}
+        </div>
 
         <div className="mt-10 flex justify-center">
           <Button variant="outline" className="px-12">

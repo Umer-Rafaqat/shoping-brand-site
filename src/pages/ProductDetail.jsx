@@ -29,45 +29,29 @@ export default function ProductDetail() {
       <div className={CONTAINER}>
         <Breadcrumb items={productDetail.breadcrumb} />
 
-        {/* Product section: 150px thumbnails | auto main image | 530px info, gap 40px */}
-        {/* <div className=" flex flex-col gap-6 lg:grid lg:grid-cols-[175px_auto_530px] lg:items-start lg:gap-10">
-          <ThumbnailColumn
-            images={productDetail.images}
-            activeIndex={activeImage}
-            onSelect={setActiveImage}
-          />
-          <MainImage
-            src={productDetail.images[activeImage]}
-            alt={productDetail.name}
-          />
-          <ProductInfo product={productDetail} />
-        </div> */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[175px_auto_530px] lg:items-start lg:gap-10">
+          {/* Mobile: Main Image pehle */}
+          <div className="order-1 lg:order-2">
+            <MainImage
+              src={productDetail.images[activeImage]}
+              alt={productDetail.name}
+            />
+          </div>
 
-       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[175px_auto_530px] lg:items-start lg:gap-10">
+          {/* Mobile: Thumbnails baad mein */}
+          <div className="order-2 lg:order-1">
+            <ThumbnailColumn
+              images={productDetail.images}
+              activeIndex={activeImage}
+              onSelect={setActiveImage}
+            />
+          </div>
 
-  {/* Mobile: Main Image pehle */}
-  <div className="order-1 lg:order-2">
-    <MainImage
-      src={productDetail.images[activeImage]}
-      alt={productDetail.name}
-    />
-  </div>
-
-  {/* Mobile: Thumbnails baad mein */}
-  <div className="order-2 lg:order-1">
-    <ThumbnailColumn
-      images={productDetail.images}
-      activeIndex={activeImage}
-      onSelect={setActiveImage}
-    />
-  </div>
-
-  {/* Product Info */}
-  <div className="order-3">
-    <ProductInfo product={productDetail} />
-  </div>
-
-</div>
+          {/* Product Info */}
+          <div className="order-3">
+            <ProductInfo product={productDetail} />
+          </div>
+        </div>
 
         <ProductTabs activeTab={activeTab} onChange={setActiveTab} />
 
@@ -86,10 +70,10 @@ export default function ProductDetail() {
         <RelatedProducts />
       </div>
 
-        <div className="-mb-20 relative z-10 mt-16">
-    <Newsletter />
-  </div>
-    
+      <div className="-mb-20 relative z-10 mt-16">
+        <Newsletter />
+      </div>
+
       <Footer />
     </div>
   );

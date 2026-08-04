@@ -19,14 +19,19 @@ export default function ReviewCard({ review }) {
             />
           ))}
         </div>
-        <button aria-label="More options" className="text-black/40 hover:text-black">
+        <button
+          aria-label="More options"
+          className="text-black/40 hover:text-black"
+        >
           <MoreHorizontal size={18} />
         </button>
       </div>
 
       <div className="mt-4 flex items-center gap-1.5">
         <span className="font-satoshi text-base font-bold">{name}</span>
-        {verified && <BadgeCheck size={16} className="fill-green-500 text-white" />}
+        {verified && (
+          <BadgeCheck size={16} className="fill-green-500 text-white" />
+        )}
       </div>
 
       <p className="mt-3 font-satoshi text-sm leading-relaxed text-black/60">

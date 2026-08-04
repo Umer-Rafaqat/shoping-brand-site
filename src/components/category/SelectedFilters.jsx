@@ -1,15 +1,16 @@
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Shows active color/size/dress-style filters as removable chips —
-// this is the "Badge" usage from the spec (selected sizes & more).
 export default function SelectedFilters({ filters, onChange }) {
   const { selectedColors, selectedSizes, selectedDressStyles } = filters;
 
   const chips = [
     ...selectedColors.map((v) => ({ group: "selectedColors", value: v })),
     ...selectedSizes.map((v) => ({ group: "selectedSizes", value: v })),
-    ...selectedDressStyles.map((v) => ({ group: "selectedDressStyles", value: v })),
+    ...selectedDressStyles.map((v) => ({
+      group: "selectedDressStyles",
+      value: v,
+    })),
   ];
 
   if (chips.length === 0) return null;

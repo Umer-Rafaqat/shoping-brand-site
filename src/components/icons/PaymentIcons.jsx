@@ -1,7 +1,3 @@
-// Lightweight inline SVG marks for common payment methods (used in the
-// footer instead of text labels). Sized via a shared wrapper so they line
-// up regardless of each mark's native aspect ratio.
-
 function IconWrap({ children, bg = "#fff" }) {
   return (
     <span

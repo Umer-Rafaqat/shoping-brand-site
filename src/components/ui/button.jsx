@@ -22,7 +22,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 const Button = React.forwardRef(
@@ -32,7 +32,7 @@ const Button = React.forwardRef(
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
+  ),
 );
 Button.displayName = "Button";
 

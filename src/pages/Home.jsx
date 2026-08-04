@@ -19,11 +19,11 @@ export default function Home() {
       <NewArrivals />
       <TopSelling />
       <DressStyle />
-     
+
       <Testimonials />
-  <div className="-mb-20 relative z-10">
-    <Newsletter />
-  </div>
+      <div className="-mb-20 relative z-10">
+        <Newsletter />
+      </div>
       <Footer />
     </div>
   );

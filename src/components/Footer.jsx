@@ -15,7 +15,12 @@ const columns = [
   },
   {
     title: "Help",
-    links: ["Customer Support", "Delivery Details", "Terms & Conditions", "Privacy Policy"],
+    links: [
+      "Customer Support",
+      "Delivery Details",
+      "Terms & Conditions",
+      "Privacy Policy",
+    ],
   },
   {
     title: "FAQ",
@@ -23,20 +28,29 @@ const columns = [
   },
   {
     title: "Resources",
-    links: ["Free eBooks", "Development Tutorial", "How to - Blog", "Youtube Playlist"],
+    links: [
+      "Free eBooks",
+      "Development Tutorial",
+      "How to - Blog",
+      "Youtube Playlist",
+    ],
   },
 ];
 
 const socials = [Facebook, Twitter, Instagram, Github];
-const paymentIcons = [VisaIcon, MastercardIcon, PayPalIcon, ApplePayIcon, GPayIcon];
+const paymentIcons = [
+  VisaIcon,
+  MastercardIcon,
+  PayPalIcon,
+  ApplePayIcon,
+  GPayIcon,
+];
 
 // Figma: width 1441 / height 499 -> full-width footer, height driven by
 // content instead of a fixed px value.
 export default function Footer() {
   return (
     <footer className="bg-surface-100 pt-28">
-     
-
       <div className="mx-auto mt-14 w-full max-w-container px-[4%] pb-16">
         <div className="grid grid-cols-2 gap-8 border-b border-black/10 pb-10 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">

@@ -13,10 +13,8 @@ export default function DressStyle() {
           </h2>
 
           <div className="mt-8 flex flex-col gap-5">
-
             {/* ================= FIRST ROW ================= */}
             <div className="flex flex-col gap-5 sm:flex-row">
-
               {/* Casual */}
               <div className="relative h-[220px] w-full overflow-hidden rounded-3xl bg-white sm:h-[289px] sm:w-[407px]">
                 <img
@@ -42,12 +40,10 @@ export default function DressStyle() {
                   Formal
                 </span>
               </div>
-
             </div>
 
             {/* ================= SECOND ROW ================= */}
             <div className="flex flex-col gap-5 sm:flex-row">
-
               {/* Party */}
               <div className="relative h-[220px] w-full overflow-hidden rounded-3xl bg-white sm:h-[289px] sm:flex-1">
                 <img
@@ -73,9 +69,7 @@ export default function DressStyle() {
                   Gym
                 </span>
               </div>
-
             </div>
-
           </div>
         </div>
       </div>

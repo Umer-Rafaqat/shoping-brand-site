@@ -1,4 +1,3 @@
-
 import mainImg from "../assets/product-detail/main.png";
 
 import thumb2 from "../assets/product-detail/thumb-2.png";
@@ -14,7 +13,7 @@ export const productDetail = {
   discount: "-40%",
   description:
     "This graphic t-shirt which is perfect for any occasion. Crafted from a soft and breathable fabric, it offers superior comfort and style.",
-  images: [mainImg,  thumb2, thumb3],
+  images: [mainImg, thumb2, thumb3],
   colors: [
     { id: "olive", value: "#4A4A3A" },
     { id: "green", value: "#2B4A3E" },

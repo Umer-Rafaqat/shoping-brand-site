@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function ProductInfo({ product }) {
-  const { name, rating, price, oldPrice, discount, description, colors, sizes } = product;
+  const {
+    name,
+    rating,
+    price,
+    oldPrice,
+    discount,
+    description,
+    colors,
+    sizes,
+  } = product;
 
   const [selectedColor, setSelectedColor] = useState(colors[0]?.id);
   const [selectedSize, setSelectedSize] = useState("Large");
@@ -73,56 +82,51 @@ export default function ProductInfo({ product }) {
 
       <div>
         <p className="font-satoshi text-sm text-black/60">Choose Size</p>
-       <div className="mt-3 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-  {sizes.map((size) => (
-    <button
-      key={size}
-      type="button"
-      onClick={() => setSelectedSize(size)}
-      className={`h-12 rounded-full px-5 font-satoshi text-sm transition-colors ${
-        selectedSize === size
-          ? "bg-black text-white"
-          : "bg-surface-100 text-black/70 hover:bg-surface-100/70"
-      }`}
-    >
-      {size}
-    </button>
-  ))}
-</div>
+        <div className="mt-3 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+          {sizes.map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => setSelectedSize(size)}
+              className={`h-12 rounded-full px-5 font-satoshi text-sm transition-colors ${
+                selectedSize === size
+                  ? "bg-black text-white"
+                  : "bg-surface-100 text-black/70 hover:bg-surface-100/70"
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="my-6 border-t border-black/10" />
 
-     <div className="mt-6 flex items-center gap-5">
-  {/* Quantity */}
-  <div className="flex h-14 w-[170px] items-center justify-between rounded-full bg-surface-100 px-6">
-    <button
-      type="button"
-      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-    >
-      <Minus size={20} />
-    </button>
+      <div className="mt-6 flex items-center gap-5">
+        {/* Quantity */}
+        <div className="flex h-14 w-[170px] items-center justify-between rounded-full bg-surface-100 px-6">
+          <button
+            type="button"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+          >
+            <Minus size={20} />
+          </button>
 
-    <span className="font-satoshi text-base font-medium">
-      {quantity}
-    </span>
+          <span className="font-satoshi text-base font-medium">{quantity}</span>
 
-    <button
-      type="button"
-      onClick={() => setQuantity((q) => q + 1)}
-    >
-      <Plus size={20} />
-    </button>
-  </div>
+          <button type="button" onClick={() => setQuantity((q) => q + 1)}>
+            <Plus size={20} />
+          </button>
+        </div>
 
-  {/* Add to Cart */}
-  <button
-    type="button"
-    className="flex-1 h-14 rounded-full bg-black font-satoshi text-base font-medium text-white transition-colors hover:bg-black/85"
-  >
-    Add to Cart
-  </button>
-</div>
+        {/* Add to Cart */}
+        <button
+          type="button"
+          className="flex-1 h-14 rounded-full bg-black font-satoshi text-base font-medium text-white transition-colors hover:bg-black/85"
+        >
+          Add to Cart
+        </button>
+      </div>
     </div>
   );
 }

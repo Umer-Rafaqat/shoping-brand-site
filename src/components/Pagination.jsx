@@ -2,8 +2,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Builds a page list like [1, 2, 3, "...", 8, 9, 10] — always shows the
-// first/last 3 pages and collapses the middle once there's a gap.
 function getPageList(current, total) {
   const pages = [];
   const windowSize = 1;
@@ -58,7 +56,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
                 "flex h-10 w-10 items-center justify-center rounded-full font-satoshi text-sm transition-colors",
                 page === currentPage
                   ? "bg-surface-100 font-medium text-black"
-                  : "text-black/50 hover:bg-surface-100"
+                  : "text-black/50 hover:bg-surface-100",
               )}
             >
               {page}
@@ -70,7 +68,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
             >
               ...
             </span>
-          )
+          ),
         )}
       </div>
 

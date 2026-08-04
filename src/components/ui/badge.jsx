@@ -12,7 +12,7 @@ const badgeVariants = cva(
       },
     },
     defaultVariants: { variant: "discount" },
-  }
+  },
 );
 
 function Badge({ className, variant, ...props }) {
