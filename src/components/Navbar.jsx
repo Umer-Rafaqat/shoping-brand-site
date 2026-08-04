@@ -43,11 +43,13 @@ export default function Navbar() {
             </button>
 
             <button>
-              <img
-                src={userIcon}
-                alt="User"
-                className="h-7 w-7 object-contain"
-              />
+              <Link to="/login">
+                <img
+                  src={userIcon}
+                  alt="User"
+                  className="h-7 w-7 object-contain"
+                />
+              </Link>
             </button>
           </div>
         </div>
@@ -88,11 +90,13 @@ export default function Navbar() {
               <ShoppingCart />
             </Link>
 
-            <img
-              src={userIcon}
-              alt="User"
-              className="h-[22px] w-[22px] object-contain"
-            />
+            <Link to="/login">
+              <img
+                src={userIcon}
+                alt="User"
+                className="h-[22px] w-[22px] object-contain"
+              />
+            </Link>
           </div>
         </div>
       </div>
