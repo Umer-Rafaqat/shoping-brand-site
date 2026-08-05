@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.75rem;
+  --border: 220 13% 91%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply font-satoshi text-black antialiased;
+}
+
+/* CAP_HEIGHT leading trim approximation from the Figma spec */
+.leading-cap {
+  line-height: 1;
+}
+.embla {
+  overflow: visible;
+}
+
+/* Used by NewArrivals/TopSelling to hide the scrollbar on the mobile
+   horizontal product strip while keeping it scrollable. Not a Tailwind
+   built-in, so it's defined here. Both class names are supported since
+   the two sections currently use different names for the same thing. */
+.scrollbar-hide,
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
