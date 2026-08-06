@@ -1,6 +1,9 @@
 import { useState } from "react";
+// import userIcon from "../assets/user-icon.svg";
+
 import { Link } from "react-router-dom";
-import userIcon from "../assets/user-icon.svg";
+import userIcon from "../assets/user-icon.png";
+import AccountMenu from "@/components/AccountMenu";
 import { Search, ShoppingCart, Menu, ChevronDown, X } from "lucide-react";
 
 const links = [
@@ -36,21 +39,11 @@ export default function Navbar() {
               <Search size={28} />
             </button>
 
-            <button>
-              <Link to="/cart">
-                <ShoppingCart />
-              </Link>
-            </button>
+            <Link to="/cart">
+              <ShoppingCart size={28} />
+            </Link>
 
-            <button>
-              <Link to="/login">
-                <img
-                  src={userIcon}
-                  alt="User"
-                  className="h-7 w-7 object-contain"
-                />
-              </Link>
-            </button>
+            <AccountMenu iconSize={28} />
           </div>
         </div>
 
@@ -90,13 +83,7 @@ export default function Navbar() {
               <ShoppingCart />
             </Link>
 
-            <Link to="/login">
-              <img
-                src={userIcon}
-                alt="User"
-                className="h-[22px] w-[22px] object-contain"
-              />
-            </Link>
+            <AccountMenu iconSize={22} />
           </div>
         </div>
       </div>
