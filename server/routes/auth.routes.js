@@ -4,7 +4,6 @@ const rateLimit = require("express-rate-limit");
 const {
   signup,
   login,
-  refresh,
   logout,
   getMe,
 } = require("../controllers/auth.controller");
@@ -33,7 +32,6 @@ const refreshLimiter = rateLimit({
 // ─── Routes ──────────────────────────────────────────────────────────────────
 router.post("/signup", authLimiter, signupRules, validate, signup);
 router.post("/login", authLimiter, loginRules, validate, login);
-router.post("/refresh", refreshLimiter, refresh);
 router.post("/logout", protect, logout);
 router.get("/me", protect, getMe);
 

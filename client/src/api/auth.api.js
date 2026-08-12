@@ -17,22 +17,7 @@ export const logoutAPI = async () => {
   clearAccessToken();
 };
 
-let restoreSessionPromise = null;
-
 export const getMeAPI = async () => {
-  if (restoreSessionPromise) return restoreSessionPromise;
-
-  restoreSessionPromise = (async () => {
-    const { data: refreshData } = await api.post("/auth/refresh");
-    setAccessToken(refreshData.accessToken);
-
-    const { data } = await api.get("/auth/me");
-    return data.user;
-  })();
-
-  try {
-    return await restoreSessionPromise;
-  } finally {
-    restoreSessionPromise = null;
-  }
+  const { data } = await api.get("/auth/me");
+  return data.user;
 };
