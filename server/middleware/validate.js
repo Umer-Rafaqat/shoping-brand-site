@@ -1,5 +1,13 @@
 const { body, validationResult } = require("express-validator");
 
+const emailRule = body("email")
+  .trim()
+  .notEmpty()
+  .withMessage("Email is required. ")
+  .isEmail()
+  .withMessage("Enter a valid email address.")
+  .normalizeEmail();
+
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -15,13 +23,7 @@ const signupRules = [
     .withMessage("Name is required.")
     .isLength({ max: 60 })
     .withMessage("Name cannot exceed 60 characters."),
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required.")
-    .isEmail()
-    .withMessage("Enter a valid email address.")
-    .normalizeEmail(),
+  emailRule,
   body("password")
     .notEmpty()
     .withMessage("Password is required.")
@@ -30,13 +32,7 @@ const signupRules = [
 ];
 
 const loginRules = [
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required.")
-    .isEmail()
-    .withMessage("Enter a valid email address.")
-    .normalizeEmail(),
+  emailRule,
   body("password").notEmpty().withMessage("Password is required."),
 ];
 

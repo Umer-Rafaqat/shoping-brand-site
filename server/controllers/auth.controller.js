@@ -149,7 +149,7 @@ const logout = async (req, res) => {
 };
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
-const getMe = async (req, res) => {
+const getMe = (req, res) => {
   return res.status(200).json({ user: req.user.toPublicJSON() });
 };
 
