@@ -6,26 +6,40 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMeAPI, loginAPI, logoutAPI, signupAPI } from "@/api/auth.api";
+import {
+  getMeAPI,
+  loginAPI,
+  logoutAPI,
+  signupAPI,
+  deleteAccountAPI,
+} from "@/api/auth.api";
+import { getAccessToken, clearAccessToken } from "@/api/axiosInstance";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const restoreSession = async () => {
+      if (!getAccessToken()) {
+        setAuthLoading(false);
+        return;
+      }
       try {
         const me = await getMeAPI();
         setUser(me);
       } catch {
+        clearAccessToken();
         setUser(null);
       } finally {
         setAuthLoading(false);
       }
     };
+
     restoreSession();
   }, []);
 
@@ -56,8 +70,31 @@ export function AuthProvider({ children }) {
     }
   }, [navigate]);
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedFields } : prev));
+  }, []);
+
+  const removeAccount = useCallback(
+    async ({ password }) => {
+      await deleteAccountAPI({ password });
+      setUser(null);
+      navigate("/");
+    },
+    [navigate],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, authLoading, signup, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        authLoading,
+        signup,
+        login,
+        logout,
+        updateUser,
+        removeAccount,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

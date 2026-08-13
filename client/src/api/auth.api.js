@@ -17,22 +17,28 @@ export const logoutAPI = async () => {
   clearAccessToken();
 };
 
-let restoreSessionPromise = null;
-
 export const getMeAPI = async () => {
-  if (restoreSessionPromise) return restoreSessionPromise;
+  const { data } = await api.get("/auth/me");
+  return data.user;
+};
 
-  restoreSessionPromise = (async () => {
-    const { data: refreshData } = await api.post("/auth/refresh");
-    setAccessToken(refreshData.accessToken);
+// ─── My Account (CRUD) ───────────────────────────────────────
 
-    const { data } = await api.get("/auth/me");
-    return data.user;
-  })();
+export const updateProfileAPI = async ({ name, email }) => {
+  const { data } = await api.put("/auth/me", { name, email });
+  return data.user;
+};
 
-  try {
-    return await restoreSessionPromise;
-  } finally {
-    restoreSessionPromise = null;
-  }
+export const changePasswordAPI = async ({ currentPassword, newPassword }) => {
+  const { data } = await api.put("/auth/change-password", {
+    currentPassword,
+    newPassword,
+  });
+  return data;
+};
+
+export const deleteAccountAPI = async ({ password }) => {
+  const { data } = await api.delete("/auth/me", { data: { password } });
+  clearAccessToken();
+  return data;
 };
