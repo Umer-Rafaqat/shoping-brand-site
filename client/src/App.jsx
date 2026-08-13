@@ -7,6 +7,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import GuestRoute from "@/components/auth/GuestRoute";
+import Account from "@/pages/Account";
 
 export default function App() {
   return (
@@ -39,6 +40,15 @@ export default function App() {
             <GuestRoute>
               <Signup />
             </GuestRoute>
+          }
+        />
+
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <Account />
+            </ProtectedRoute>
           }
         />
       </Routes>

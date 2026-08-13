@@ -6,9 +6,19 @@ const {
   login,
   logout,
   getMe,
+  updateProfile,
+  changePassword,
+  deleteAccount,
 } = require("../controllers/auth.controller");
 const { protect } = require("../middleware/auth");
-const { validate, signupRules, loginRules } = require("../middleware/validate");
+const {
+  validate,
+  signupRules,
+  loginRules,
+  updateProfileRules,
+  changePasswordRules,
+  deleteAccountRules,
+} = require("../middleware/validate");
 
 const router = express.Router();
 
@@ -34,5 +44,16 @@ router.post("/signup", authLimiter, signupRules, validate, signup);
 router.post("/login", authLimiter, loginRules, validate, login);
 router.post("/logout", protect, logout);
 router.get("/me", protect, getMe);
+
+// My Account (CRUD)
+router.put("/me", protect, updateProfileRules, validate, updateProfile);
+router.put(
+  "/change-password",
+  protect,
+  changePasswordRules,
+  validate,
+  changePassword,
+);
+router.delete("/me", protect, deleteAccountRules, validate, deleteAccount);
 
 module.exports = router;
