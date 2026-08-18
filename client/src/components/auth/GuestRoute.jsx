@@ -5,7 +5,10 @@ export default function GuestRoute({ children }) {
   const { user, authLoading } = useAuth();
 
   if (authLoading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user)
+    return (
+      <Navigate to={user.role?.name === "admin" ? "/admin" : "/"} replace />
+    );
 
   return children;
 }

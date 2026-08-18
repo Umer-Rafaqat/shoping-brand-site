@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     async (formData) => {
       const { user: newUser } = await signupAPI(formData);
       setUser(newUser);
-      navigate("/");
+      navigate(newUser.role?.name === "admin" ? "/admin" : "/");
     },
     [navigate],
   );
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
     async (credentials) => {
       const { user: loggedIn } = await loginAPI(credentials);
       setUser(loggedIn);
-      navigate("/");
+      navigate(loggedIn.role?.name === "admin" ? "/admin" : "/");
     },
     [navigate],
   );
