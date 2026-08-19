@@ -1,7 +1,6 @@
 const User = require("../models/User");
+const Role = require("../models/Role");
 const { signAccessToken } = require("../utils/token");
-
-const MAX_SESSIONS = 5;
 
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
 const signup = async (req, res) => {
@@ -13,7 +12,15 @@ const signup = async (req, res) => {
       return res.status(409).json({ message: "Email already in use." });
     }
 
-    const user = await User.create({ name, email, password });
+    const userRole = await Role.findOrCreate("user");
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: userRole._id,
+    });
+    await user.populate("role");
 
     const accessToken = signAccessToken(user._id);
 
@@ -33,7 +40,9 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email })
+      .select("+password")
+      .populate("role");
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
@@ -62,30 +71,32 @@ const logout = (req, res) => {
 };
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
+// req.user.role is already populated by the `protect` middleware.
 const getMe = (req, res) => {
   return res.status(200).json({ user: req.user.toPublicJSON() });
 };
 
 // ─── PUT /api/auth/me ──────────────────────────────────────────────────────────
-// Update profile (name, email). Protected — req.user set by `protect`.
-
 const updateProfile = async (req, res) => {
   try {
     const { name, email } = req.body;
+
     if (email !== req.user.email) {
       const existing = await User.findOne({
         email,
         _id: { $ne: req.user._id },
       });
       if (existing) {
-        return res.status(409).json({ email: "Email already in use." });
+        return res.status(409).json({ message: "Email already in use." });
       }
     }
+
     const updated = await User.findByIdAndUpdate(
       req.user._id,
       { name, email },
       { new: true, runValidators: true },
-    );
+    ).populate("role");
+
     return res.status(200).json({
       message: "Profile updated successfully.",
       user: updated.toPublicJSON(),
@@ -110,7 +121,7 @@ const changePassword = async (req, res) => {
         .json({ message: "Current password is incorrect." });
     }
 
-    user.password = newPassword; // pre("save") hook re-hashes it
+    user.password = newPassword;
     await user.save();
 
     return res.status(200).json({ message: "Password changed successfully." });

@@ -1,3 +1,5 @@
+// joi;
+// zod;
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -28,6 +30,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    role: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      required: true,
+    },
   },
   { timestamps: true },
 );
@@ -44,11 +52,17 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 userSchema.methods.toPublicJSON = function () {
+  const isPopulated =
+    this.role && typeof this.role === "object" && this.role.name;
+
   return {
     _id: this._id,
     name: this.name,
     email: this.email,
     isVerified: this.isVerified,
+    role: isPopulated
+      ? { _id: this.role._id, name: this.role.name }
+      : this.role,
     createdAt: this.createdAt,
   };
 };

@@ -8,6 +8,10 @@ import Signup from "@/pages/Signup";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import GuestRoute from "@/components/auth/GuestRoute";
 import Account from "@/pages/Account";
+import AdminRoute from "@/components/auth/AdminRoute";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import Dashboard from "@/pages/admin/Dashboard";
+import Users from "@/pages/admin/Users";
 
 export default function App() {
   return (
@@ -51,6 +55,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="users" element={<Users />} />
+        </Route>
       </Routes>
     </div>
   );

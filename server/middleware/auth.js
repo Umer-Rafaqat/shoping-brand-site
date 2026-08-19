@@ -12,7 +12,8 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = verifyAccessToken(token);
-    const user = await User.findById(decoded.sub);
+
+    const user = await User.findById(decoded.sub).populate("role");
 
     if (!user) {
       return res.status(403).json({ message: "User no longer exists." });
