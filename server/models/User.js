@@ -19,6 +19,19 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Enter a valid email"],
     },
+    username: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+      maxlength: [30, "Username cannot exceed 30 characters"],
+    },
+    avatarUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -59,6 +72,8 @@ userSchema.methods.toPublicJSON = function () {
     _id: this._id,
     name: this.name,
     email: this.email,
+    username: this.username || "",
+    avatarUrl: this.avatarUrl || "",
     isVerified: this.isVerified,
     role: isPopulated
       ? { _id: this.role._id, name: this.role.name }

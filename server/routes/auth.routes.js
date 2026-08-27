@@ -7,15 +7,19 @@ const {
   logout,
   getMe,
   updateProfile,
+  updateAdminProfile,
   changePassword,
   deleteAccount,
 } = require("../controllers/auth.controller");
 const { protect } = require("../middleware/auth");
+const { authorize } = require("../middleware/authorize");
+const { upload } = require("../middleware/upload");
 const {
   validate,
   signupRules,
   loginRules,
   updateProfileRules,
+  adminProfileRules,
   changePasswordRules,
   deleteAccountRules,
 } = require("../middleware/validate");
@@ -47,6 +51,7 @@ router.get("/me", protect, getMe);
 
 // My Account (CRUD)
 router.put("/me", protect, updateProfileRules, validate, updateProfile);
+router.put("/admin-profile", protect, authorize("admin"), upload.single("avatar"), adminProfileRules, validate, updateAdminProfile);
 router.put(
   "/change-password",
   protect,

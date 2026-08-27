@@ -107,6 +107,38 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const updateAdminProfile = async (req, res) => {
+  try {
+    const { name, username } = req.body;
+    const normalizedUsername = username.toLowerCase();
+    const existing = await User.findOne({
+      username: normalizedUsername,
+      _id: { $ne: req.user._id },
+    });
+    if (existing) {
+      return res.status(409).json({ message: "Username already in use." });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        name,
+        username: normalizedUsername,
+        avatarUrl: req.file ? req.file.filename : req.user.avatarUrl || "",
+      },
+      { new: true, runValidators: true },
+    ).populate("role");
+
+    return res.status(200).json({
+      message: "Admin profile updated successfully.",
+      user: updated.toPublicJSON(),
+    });
+  } catch (err) {
+    console.error("updateAdminProfile error:", err);
+    return res.status(500).json({ message: "Server error. Try again." });
+  }
+};
+
 // ─── PUT /api/auth/change-password ─────────────────────────────────────────────
 const changePassword = async (req, res) => {
   try {
@@ -158,6 +190,7 @@ module.exports = {
   logout,
   getMe,
   updateProfile,
+  updateAdminProfile,
   changePassword,
   deleteAccount,
 };

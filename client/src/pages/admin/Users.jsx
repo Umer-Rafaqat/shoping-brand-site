@@ -7,8 +7,10 @@ import {
   updateUserAPI,
   deleteUserAPI,
 } from "@/api/admin.api";
+import Pagination from "@/components/Pagination";
 
 const SEARCH_DEBOUNCE_MS = 400;
+const PAGE_SIZE = 10;
 
 export default function Users() {
   const { user: currentUser } = useAuth();
@@ -27,7 +29,11 @@ export default function Users() {
     setLoading(true);
     setError("");
     try {
-      const data = await getUsersAPI({ page: pageArg, search: searchArg });
+      const data = await getUsersAPI({
+        page: pageArg,
+        limit: PAGE_SIZE,
+        search: searchArg,
+      });
       setUsers(data.users);
       setTotalPages(data.totalPages);
     } catch (err) {
@@ -66,7 +72,11 @@ export default function Users() {
       return;
     try {
       await deleteUserAPI(target._id);
-      setUsers((prev) => prev.filter((u) => u._id !== target._id));
+      if (users.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        fetchUsers(page, debouncedSearch);
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete user.");
     }
@@ -195,24 +205,11 @@ export default function Users() {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm ${
-                p === page
-                  ? "bg-black text-white"
-                  : "bg-white text-black/60 hover:bg-black/5"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {addingUser && (
         <AddUserModal

@@ -2,15 +2,11 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function SelectedFilters({ filters, onChange }) {
-  const { selectedColors, selectedSizes, selectedDressStyles } = filters;
+  const { selectedColors, selectedSizes } = filters;
 
   const chips = [
     ...selectedColors.map((v) => ({ group: "selectedColors", value: v })),
     ...selectedSizes.map((v) => ({ group: "selectedSizes", value: v })),
-    ...selectedDressStyles.map((v) => ({
-      group: "selectedDressStyles",
-      value: v,
-    })),
   ];
 
   if (chips.length === 0) return null;

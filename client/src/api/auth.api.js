@@ -29,6 +29,13 @@ export const updateProfileAPI = async ({ name, email }) => {
   return data.user;
 };
 
+export const updateAdminProfileAPI = async (payload) => {
+  const { data } = await api.put("/auth/admin-profile", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.user;
+};
+
 export const changePasswordAPI = async ({ currentPassword, newPassword }) => {
   const { data } = await api.put("/auth/change-password", {
     currentPassword,

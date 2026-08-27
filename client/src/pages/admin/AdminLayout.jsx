@@ -1,14 +1,25 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Users as UsersIcon, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users as UsersIcon,
+  Package,
+  LogOut,
+  UserRound,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import AdminProfileModal from "@/pages/admin/AdminProfileModal";
+import { assetUrl } from "@/lib/assetUrl";
 
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/users", label: "Users", icon: UsersIcon },
+  { to: "/admin/products", label: "Products", icon: Package },
 ];
 
 export default function AdminLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -54,9 +65,36 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 bg-surface-100 p-8">
-        <Outlet />
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col bg-surface-100">
+        <header className="flex items-center justify-between border-b border-black/10 bg-white px-8 py-4">
+          <span className="text-sm font-medium text-black/50">Store Management</span>
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="flex items-center gap-3 rounded-full py-1 pr-2 text-left hover:bg-black/5"
+          >
+            {user?.avatarUrl ? (
+              <img src={assetUrl(user.avatarUrl)} alt="Admin profile" className="h-9 w-9 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
+                <UserRound size={18} />
+              </span>
+            )}
+            <span className="hidden text-sm font-medium sm:block">{user?.username || user?.name}</span>
+          </button>
+        </header>
+        <main className="flex-1 p-8">
+          <Outlet />
+        </main>
+      </div>
+
+      {profileOpen && (
+        <AdminProfileModal
+          user={user}
+          onClose={() => setProfileOpen(false)}
+          onUpdated={updateUser}
+        />
+      )}
     </div>
   );
 }

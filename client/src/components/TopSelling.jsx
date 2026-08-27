@@ -1,8 +1,43 @@
+import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
-import { topSelling } from "@/data/products";
+import { getPublicProductsAPI } from "@/api/publicProducts.api";
+
+const mapProduct = (p) => ({
+  id: p._id,
+  name: p.name,
+  image: p.images?.[0] || "",
+  rating: p.rating || 0,
+  price: p.price,
+  oldPrice: p.oldPrice,
+  discount: p.discountPercent ? `-${p.discountPercent}%` : null,
+});
 
 export default function TopSelling() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const newArrivals = await getPublicProductsAPI({
+        page: 1,
+        limit: 4,
+        sort: "newest",
+      });
+      const data = await getPublicProductsAPI({
+        page: 1,
+        limit: 4,
+        sort: "topSelling",
+        exclude: newArrivals.products.map((product) => product._id),
+      });
+      setProducts(data.products.map(mapProduct));
+    };
+
+    loadProducts()
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <section className="w-full">
       <div className="mx-auto w-full max-w-container px-[4%] py-12 md:py-16">
@@ -10,13 +45,21 @@ export default function TopSelling() {
           Top Selling
         </h2>
 
-        <div className="mt-10 flex gap-4 overflow-x-auto pb-2 hide-scrollbar lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible">
-          {topSelling.map((p) => (
-            <div key={p.id} className="w-[220px] shrink-0 lg:w-auto">
-              <ProductCard product={p} />
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <p className="mt-10 text-center font-satoshi text-sm text-black/50">
+            Loading...
+          </p>
+        ) : products.length === 0 ? (
+          <p className="mt-10 text-center font-satoshi text-sm text-black/50">
+            No products yet — add some from the admin panel.
+          </p>
+        ) : (
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-10 flex justify-center">
           <Button variant="outline" className="px-12">

@@ -1,7 +1,13 @@
 import api from "./axiosInstance";
 
-export const getUsersAPI = async ({ page = 1, search = "" } = {}) => {
-  const { data } = await api.get("/admin/users", { params: { page, search } });
+export const getUsersAPI = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+} = {}) => {
+  const { data } = await api.get("/admin/users", {
+    params: { page, limit, search },
+  });
   return data;
 };
 

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { assetUrl } from "@/lib/assetUrl";
 
 export default function ProductCard({ product }) {
   const { id, name, image, rating, price, oldPrice, discount } = product;
@@ -12,7 +13,7 @@ export default function ProductCard({ product }) {
         <CardContent>
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-surface-100">
             <img
-              src={image}
+              src={assetUrl(image)}
               alt={name}
               className="h-full w-full object-cover object-center"
             />

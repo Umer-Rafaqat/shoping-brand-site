@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight, SlidersVertical, Check, X } from "lucide-react";
 import {
   Accordion,
@@ -9,12 +9,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  categories,
-  colorSwatches,
-  sizes,
-  dressStyleFilters,
-} from "@/data/filters";
+import { colorSwatches, sizes } from "@/data/filters";
 
 export default function FiltersSidebar({
   filters,
@@ -22,11 +17,17 @@ export default function FiltersSidebar({
   onApply,
   isOpen,
   onClose,
+  categories = [],
+  activeCategorySlug,
+  onCategoryChange,
   className,
 }) {
-  const { priceRange, selectedColors, selectedSizes, selectedDressStyles } =
-    filters;
+  const { priceRange, selectedColors, selectedSizes } = filters;
   const [localPrice, setLocalPrice] = useState(priceRange);
+
+  useEffect(() => {
+    setLocalPrice(priceRange);
+  }, [priceRange]);
 
   const toggleInArray = (arr, value) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -54,13 +55,18 @@ export default function FiltersSidebar({
       </div>
 
       <div className="border-t border-black/10 py-2">
-        {categories.map((cat) => (
+        {categories.map((category) => (
           <button
-            key={cat}
+            key={category._id}
             type="button"
-            className="flex w-full items-center justify-between py-2.5 font-satoshi text-sm text-black/70 hover:text-black"
+            onClick={() => onCategoryChange(category.slug)}
+            className={`flex w-full items-center justify-between py-2.5 font-satoshi text-sm hover:text-black ${
+              activeCategorySlug === category.slug
+                ? "font-medium text-black"
+                : "text-black/70"
+            }`}
           >
-            {cat}
+            {category.name}
             <ChevronRight size={16} />
           </button>
         ))}
@@ -68,7 +74,7 @@ export default function FiltersSidebar({
 
       <Accordion
         type="multiple"
-        defaultValue={["price", "colors", "size", "dress-style"]}
+        defaultValue={["price", "colors", "size"]}
         className="border-t border-black/10"
       >
         <AccordionItem value="price">
@@ -76,7 +82,7 @@ export default function FiltersSidebar({
           <AccordionContent>
             <Slider
               min={0}
-              max={300}
+              max={1000}
               step={5}
               value={localPrice}
               onValueChange={setLocalPrice}
@@ -148,38 +154,6 @@ export default function FiltersSidebar({
                     }`}
                   >
                     {size}
-                  </button>
-                );
-              })}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="dress-style" className="border-b-0">
-          <AccordionTrigger>Dress Style</AccordionTrigger>
-          <AccordionContent>
-            <div className="flex flex-col">
-              {dressStyleFilters.map((style) => {
-                const isSelected = selectedDressStyles.includes(style);
-                return (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() =>
-                      onChange({
-                        ...filters,
-                        selectedDressStyles: toggleInArray(
-                          selectedDressStyles,
-                          style,
-                        ),
-                      })
-                    }
-                    className={`flex items-center justify-between py-2.5 font-satoshi text-sm ${
-                      isSelected ? "font-medium text-black" : "text-black/70"
-                    } hover:text-black`}
-                  >
-                    {style}
-                    <ChevronRight size={16} />
                   </button>
                 );
               })}

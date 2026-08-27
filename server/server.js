@@ -4,10 +4,13 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
+const productRoutes = require("./routes/product.routes");
+const categoryRoutes = require("./routes/category.routes");
 
 const app = express();
 
@@ -25,10 +28,13 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // 404 handler
 app.use((req, res) => {

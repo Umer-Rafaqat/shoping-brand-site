@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Newsletter from "@/components/Newsletter";
@@ -9,28 +10,59 @@ import Pagination from "@/components/Pagination";
 import FiltersSidebar from "@/components/category/FiltersSidebar";
 import CategoryHeader from "@/components/category/CategoryHeader";
 import SelectedFilters from "@/components/category/SelectedFilters";
-import { categoryProducts } from "@/data/categoryProducts";
+import {
+  getPublicCategoriesAPI,
+  getPublicProductsAPI,
+} from "@/api/publicProducts.api";
 
 const CONTAINER = "mx-auto max-w-[1240px] px-4 lg:px-0";
 const PAGE_SIZE = 9;
 
 const DEFAULT_FILTERS = {
-  priceRange: [50, 200],
+  priceRange: [0, 1000],
   selectedColors: [],
-  selectedSizes: ["Large"],
-  selectedDressStyles: [],
+  selectedSizes: [],
 };
 
-export default function Category() {
-  // Draft filters reflect what's on the sidebar right now; appliedFilters
-  // is what actually filters the grid, and only updates on "Apply Filter"
+const SORT_API_VALUES = {
+  "Most Popular": "topSelling",
+  Newest: "newest",
+  "Price: Low to High": "priceAsc",
+  "Price: High to Low": "priceDesc",
+};
 
+const mapProduct = (p) => ({
+  id: p._id,
+  name: p.name,
+  image: p.images?.[0] || "",
+  rating: p.rating || 0,
+  price: p.price,
+  oldPrice: p.oldPrice,
+  discount: p.discountPercent ? `-${p.discountPercent}%` : null,
+});
+
+export default function Category() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [sort, setSort] = useState("Most Popular");
+  const [categories, setCategories] = useState([]);
 
-  // Lock background scroll while the mobile filter drawer is open.
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const activeCategory = categories.find((category) => category.slug === slug);
+
+  useEffect(() => {
+    getPublicCategoriesAPI()
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = isFiltersOpen ? "hidden" : "";
     return () => {
@@ -38,17 +70,40 @@ export default function Category() {
     };
   }, [isFiltersOpen]);
 
-  const filteredProducts = useMemo(() => {
-    const [min, max] = appliedFilters.priceRange;
-    return categoryProducts.filter((p) => p.price >= min && p.price <= max);
-  }, [appliedFilters]);
+  useEffect(() => {
+    setLoading(true);
+    const [minPrice, maxPrice] = appliedFilters.priceRange;
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProducts.length / PAGE_SIZE),
-  );
+    getPublicProductsAPI({
+      page: currentPage,
+      limit: PAGE_SIZE,
+      category: activeCategory?.slug,
+      minPrice,
+      maxPrice,
+      colors: appliedFilters.selectedColors,
+      sizes: appliedFilters.selectedSizes,
+      sort: SORT_API_VALUES[sort],
+    })
+      .then((data) => {
+        setProducts(data.products.map(mapProduct));
+        setTotal(data.total);
+        setTotalPages(Math.max(1, data.totalPages));
+      })
+      .catch(() => {
+        setProducts([]);
+        setTotal(0);
+        setTotalPages(1);
+      })
+      .finally(() => setLoading(false));
+  }, [currentPage, appliedFilters, activeCategory?.slug, sort]);
+
+  useEffect(() => {
+    setFilters(DEFAULT_FILTERS);
+    setAppliedFilters(DEFAULT_FILTERS);
+    setCurrentPage(1);
+  }, [slug]);
+
   const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const pageProducts = filteredProducts.slice(pageStart, pageStart + PAGE_SIZE);
 
   const handleApply = () => {
     setAppliedFilters(filters);
@@ -67,10 +122,9 @@ export default function Category() {
       <Navbar />
 
       <div className={CONTAINER}>
-        <Breadcrumb items={["Home", "Casual"]} />
+        <Breadcrumb items={["Home", slug || "Category"]} />
 
         <div className="mb-16 flex flex-col gap-8 lg:flex-row lg:items-start">
-          {/* Backdrop for the mobile filter drawer */}
           {isFiltersOpen && (
             <div
               className="fixed inset-0 z-40 bg-black/40 lg:hidden"
@@ -84,18 +138,26 @@ export default function Category() {
             onApply={handleApply}
             isOpen={isFiltersOpen}
             onClose={() => setIsFiltersOpen(false)}
+            categories={categories}
+            activeCategorySlug={activeCategory?.slug}
+            onCategoryChange={(categorySlug) => {
+              navigate(`/category/${categorySlug}`);
+              setIsFiltersOpen(false);
+            }}
           />
 
           <div className="flex-1">
             <CategoryHeader
-              title="Casual"
-              showingFrom={filteredProducts.length === 0 ? 0 : pageStart + 1}
-              showingTo={Math.min(
-                pageStart + PAGE_SIZE,
-                filteredProducts.length,
-              )}
-              total={filteredProducts.length}
+              title={activeCategory?.name || "Casual"}
+              showingFrom={total === 0 ? 0 : pageStart + 1}
+              showingTo={Math.min(pageStart + PAGE_SIZE, total)}
+              total={total}
               onOpenFilters={() => setIsFiltersOpen(true)}
+              sort={sort}
+              onSortChange={(value) => {
+                setSort(value);
+                setCurrentPage(1);
+              }}
             />
 
             <SelectedFilters
@@ -106,15 +168,19 @@ export default function Category() {
               }}
             />
 
-            {pageProducts.length > 0 ? (
+            {loading ? (
+              <p className="mt-16 text-center font-satoshi text-sm text-black/50">
+                Loading...
+              </p>
+            ) : products.length > 0 ? (
               <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
-                {pageProducts.map((p) => (
+                {products.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
               </div>
             ) : (
               <p className="mt-16 text-center font-satoshi text-sm text-black/50">
-                No products match the selected price range.
+                No products match the selected filters.
               </p>
             )}
 
