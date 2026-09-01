@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const { buildAssetUrl } = require("../utils/url");
 
 const parseArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -11,14 +12,22 @@ const parseArray = (value) => {
   }
 };
 
+// Reusable populate helper — works on both Query objects (find/findByIdAndUpdate)
+// and Document instances (a freshly-created product), so the same helper covers
+// every route below instead of repeating the two .populate() calls four times.
+const populateProduct = (query) => {
+  return query
+    .populate("category", "name slug")
+    .populate("createdBy", "name email");
+};
+
 // ─── GET /api/admin/products ─────────────────────────────────────────────────────
 const getAllProducts = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
     const search = req.query.search?.trim();
-    const category = req.query.category;
-    const size = req.query.size;
+    const { category, size } = req.query;
 
     const filter = {};
     if (search) filter.name = { $regex: search, $options: "i" };
@@ -26,16 +35,16 @@ const getAllProducts = async (req, res) => {
     if (size) filter.sizes = size;
 
     const [products, total] = await Promise.all([
-      Product.find(filter)
-        .populate("category", "name slug")
-        .populate("createdBy", "name email")
+      populateProduct(Product.find(filter))
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(limit),
+        .limit(limit)
+        .lean(), // read-only list — skip full Mongoose documents for speed
       Product.countDocuments(filter),
     ]);
 
     return res.status(200).json({
+      message: "Products fetched successfully.",
       products,
       page,
       totalPages: Math.ceil(total / limit),
@@ -50,14 +59,17 @@ const getAllProducts = async (req, res) => {
 // ─── GET /api/admin/products/:id ─────────────────────────────────────────────────
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("category", "name slug")
-      .populate("createdBy", "name email");
+    const product = await populateProduct(
+      Product.findById(req.params.id),
+    ).lean();
 
     if (!product)
       return res.status(404).json({ message: "Product not found." });
 
-    return res.status(200).json({ product });
+    return res.status(200).json({
+      message: "Product fetched successfully.",
+      product,
+    });
   } catch (err) {
     console.error("getProductById error:", err);
     return res.status(500).json({ message: "Server error. Try again." });
@@ -79,12 +91,16 @@ const createProduct = async (req, res) => {
       stock,
     } = req.body;
 
-    const product = await Product.create({
+    const images = req.files?.length
+      ? req.files.map((file) => buildAssetUrl(req, file.filename))
+      : parseArray(existingImages);
+
+    let product = await Product.create({
       name,
       description,
       price,
       oldPrice: oldPrice || null,
-      images: req.files?.map((file) => file.filename) || parseArray(existingImages),
+      images,
       category,
       sizes: parseArray(sizes),
       colors: parseArray(colors),
@@ -92,8 +108,7 @@ const createProduct = async (req, res) => {
       createdBy: req.user._id,
     });
 
-    await product.populate("category", "name slug");
-    await product.populate("createdBy", "name email");
+    product = await populateProduct(product);
 
     return res.status(201).json({ message: "Product created.", product });
   } catch (err) {
@@ -117,26 +132,27 @@ const updateProduct = async (req, res) => {
       stock,
     } = req.body;
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        name,
-        description,
-        price,
-        oldPrice: oldPrice || null,
-        images:
-          req.files?.length > 0
-            ? req.files.map((file) => file.filename)
-            : parseArray(existingImages),
-        category,
-        sizes: parseArray(sizes),
-        colors: parseArray(colors),
-        stock,
-      },
-      { new: true, runValidators: true },
-    )
-      .populate("category", "name slug")
-      .populate("createdBy", "name email");
+    const updateData = {
+      name,
+      description,
+      price,
+      oldPrice: oldPrice || null,
+      images:
+        req.files?.length > 0
+          ? req.files.map((file) => buildAssetUrl(req, file.filename))
+          : parseArray(existingImages),
+      category,
+      sizes: parseArray(sizes),
+      colors: parseArray(colors),
+      stock,
+    };
+
+    const product = await populateProduct(
+      Product.findByIdAndUpdate(req.params.id, updateData, {
+        new: true,
+        runValidators: true,
+      }),
+    );
 
     if (!product)
       return res.status(404).json({ message: "Product not found." });

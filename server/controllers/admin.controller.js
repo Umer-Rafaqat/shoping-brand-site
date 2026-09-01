@@ -28,6 +28,7 @@ const getAllUsers = async (req, res) => {
     ]);
 
     return res.status(200).json({
+      message: "Users fetched successfully.",
       users: users.map((u) => u.toPublicJSON()),
       page,
       totalPages: Math.ceil(total / limit),
@@ -40,8 +41,7 @@ const getAllUsers = async (req, res) => {
 };
 
 // ─── POST /api/admin/users ──────────────────────────────────────────────────────
-// Role is always forced to "user" here — this endpoint can never be used
-// to create an admin. New admins only ever come from scripts/makeAdmin.js.
+
 const createUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -76,7 +76,10 @@ const getUserById = async (req, res) => {
     const user = await User.findById(req.params.id).populate("role");
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    return res.status(200).json({ user: user.toPublicJSON() });
+    return res.status(200).json({
+      message: "User fetched successfully.",
+      user: user.toPublicJSON(),
+    });
   } catch (err) {
     console.error("getUserById error:", err);
     return res.status(500).json({ message: "Server error. Try again." });
@@ -84,8 +87,7 @@ const getUserById = async (req, res) => {
 };
 
 // ─── PUT /api/admin/users/:id ───────────────────────────────────────────────────
-// Edit name/email only — role is never accepted here. Admin accounts are
-// also off-limits: an admin can only manage regular users through this panel.
+
 const updateUser = async (req, res) => {
   try {
     const target = await User.findById(req.params.id).populate("role");

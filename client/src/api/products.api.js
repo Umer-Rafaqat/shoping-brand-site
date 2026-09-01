@@ -14,6 +14,11 @@ export const getProductsAPI = async ({
   return data;
 };
 
+export const getProductByIdAPI = async (productId) => {
+  const { data } = await api.get(`/admin/products/${productId}`);
+  return data.product;
+};
+
 export const createProductAPI = async (payload) => {
   const { data } = await api.post("/admin/products", payload, {
     headers: { "Content-Type": "multipart/form-data" },

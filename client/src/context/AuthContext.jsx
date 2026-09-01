@@ -13,7 +13,6 @@ import {
   signupAPI,
   deleteAccountAPI,
 } from "@/api/auth.api";
-import { getAccessToken, clearAccessToken } from "@/api/axiosInstance";
 
 const AuthContext = createContext(null);
 
@@ -25,15 +24,10 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const restoreSession = async () => {
-      if (!getAccessToken()) {
-        setAuthLoading(false);
-        return;
-      }
       try {
         const me = await getMeAPI();
         setUser(me);
       } catch {
-        clearAccessToken();
         setUser(null);
       } finally {
         setAuthLoading(false);

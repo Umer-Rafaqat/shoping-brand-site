@@ -18,6 +18,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Price is required"],
       min: [0, "Price can't be negative"],
+      index: true, // speeds up price range filters (minPrice/maxPrice) and priceAsc/priceDesc sorting
     },
     oldPrice: {
       type: Number,
@@ -32,6 +33,7 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: [true, "Category is required"],
+      index: true, // speeds up filtering products by category
     },
     sizes: {
       type: [String],
@@ -65,6 +67,18 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Speeds up the default "newest" sort and any date-range queries.
+productSchema.index({ createdAt: -1 });
+
+// Speeds up exact/prefix name lookups and lets MongoDB use an index for sorting by name.
+// Note: our current search uses an unanchored regex ($regex: search, no "^"), which matches
+// the term anywhere in the string (e.g. "shirt" matches "T-Shirt"). MongoDB cannot use a
+// normal index for that kind of "contains" search — only for prefix (^) matches. This index
+// still helps name-based sorting and exact/prefix lookups; true fast "contains" search at
+// scale needs a text index (word-based, not substring) or a dedicated search engine (e.g.
+// MongoDB Atlas Search) — worth adding later if the catalog grows large.
+productSchema.index({ name: 1 });
 
 productSchema.virtual("discountPercent").get(function () {
   if (!this.oldPrice || this.oldPrice <= this.price) return 0;

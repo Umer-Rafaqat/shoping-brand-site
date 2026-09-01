@@ -3,12 +3,16 @@ const { verifyAccessToken } = require("../utils/token");
 
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const bearerToken =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const token = req.cookies?.accessToken || bearerToken;
+
+  if (!token) {
     return res.status(401).json({ message: "Access token missing." });
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = verifyAccessToken(token);

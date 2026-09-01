@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Trash2, Pencil, Plus, ImageOff, Eye } from "lucide-react";
 import {
   getProductsAPI,
   deleteProductAPI,
   getCategoriesAPI,
 } from "@/api/products.api";
-import ProductFormModal from "@/pages/admin/ProductFormModal";
-import ProductViewModal from "@/pages/admin/ProductViewModal";
 import Pagination from "@/components/Pagination";
 import { assetUrl } from "@/lib/assetUrl";
 
@@ -15,6 +14,7 @@ const PAGE_SIZE = 10;
 const SIZE_OPTIONS = ["S", "M", "L", "XL", "XXL"];
 
 export default function Products() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -27,10 +27,6 @@ export default function Products() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [addingProduct, setAddingProduct] = useState(false);
-  const [viewingProduct, setViewingProduct] = useState(null);
 
   const fetchProducts = async (pageArg, searchArg, categoryArg, sizeArg) => {
     setLoading(true);
@@ -89,12 +85,6 @@ export default function Products() {
     }
   };
 
-  const handleSaved = () => {
-    setAddingProduct(false);
-    setEditingProduct(null);
-    fetchProducts(page, debouncedSearch, categoryFilter, sizeFilter);
-  };
-
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -107,7 +97,7 @@ export default function Products() {
 
         <button
           type="button"
-          onClick={() => setAddingProduct(true)}
+          onClick={() => navigate("/admin/products/new")}
           className="flex shrink-0 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-black/85"
         >
           <Plus size={16} />
@@ -205,33 +195,33 @@ export default function Products() {
                     )}
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={
-                          p.stock === 0
-                            ? "text-red-500"
-                            : p.stock < 10
-                              ? "text-yellow-600"
-                              : "text-black/60"
-                        }
-                      >
-                        {p.stock}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setViewingProduct(p)}
-                        title="View product details"
-                        className="text-black/40 hover:text-black"
-                      >
-                        <Eye size={16} />
-                      </button>
-                    </div>
+                    <span
+                      className={
+                        p.stock === 0
+                          ? "text-red-500"
+                          : p.stock < 10
+                            ? "text-yellow-600"
+                            : "text-black/60"
+                      }
+                    >
+                      {p.stock}
+                    </span>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-3">
                       <button
                         type="button"
-                        onClick={() => setEditingProduct(p)}
+                        onClick={() => navigate(`/admin/products/${p._id}`)}
+                        title="View product"
+                        className="text-black/50 hover:text-black"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/admin/products/${p._id}/edit`)
+                        }
                         title="Edit product"
                         className="text-black/50 hover:text-black"
                       >
@@ -259,28 +249,6 @@ export default function Products() {
         totalPages={totalPages}
         onPageChange={setPage}
       />
-
-      {addingProduct && (
-        <ProductFormModal
-          onClose={() => setAddingProduct(false)}
-          onSaved={handleSaved}
-        />
-      )}
-
-      {editingProduct && (
-        <ProductFormModal
-          product={editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSaved={handleSaved}
-        />
-      )}
-
-      {viewingProduct && (
-        <ProductViewModal
-          product={viewingProduct}
-          onClose={() => setViewingProduct(null)}
-        />
-      )}
     </div>
   );
 }

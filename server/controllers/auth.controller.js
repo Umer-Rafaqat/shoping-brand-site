@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const Role = require("../models/Role");
-const { signAccessToken } = require("../utils/token");
+const { signAccessToken, getTokenMaxAgeMs } = require("../utils/token");
+const { cookieOptions } = require("../utils/cookieOptions");
+const { buildAssetUrl } = require("../utils/url");
 
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
 const signup = async (req, res) => {
@@ -24,9 +26,13 @@ const signup = async (req, res) => {
 
     const accessToken = signAccessToken(user._id);
 
+    res.cookie("accessToken", accessToken, {
+      ...cookieOptions,
+      maxAge: getTokenMaxAgeMs(accessToken),
+    });
+
     return res.status(201).json({
       message: "Account created successfully.",
-      accessToken,
       user: user.toPublicJSON(),
     });
   } catch (err) {
@@ -54,9 +60,13 @@ const login = async (req, res) => {
 
     const accessToken = signAccessToken(user._id);
 
+    res.cookie("accessToken", accessToken, {
+      ...cookieOptions,
+      maxAge: getTokenMaxAgeMs(accessToken),
+    });
+
     return res.status(200).json({
       message: "Logged in successfully.",
-      accessToken,
       user: user.toPublicJSON(),
     });
   } catch (err) {
@@ -67,13 +77,17 @@ const login = async (req, res) => {
 
 // ─── POST /api/auth/logout ────────────────────────────────────────────────────
 const logout = (req, res) => {
+  res.clearCookie("accessToken", cookieOptions);
   return res.status(200).json({ message: "Logged out successfully." });
 };
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
 // req.user.role is already populated by the `protect` middleware.
 const getMe = (req, res) => {
-  return res.status(200).json({ user: req.user.toPublicJSON() });
+  return res.status(200).json({
+    message: "User fetched successfully.",
+    user: req.user.toPublicJSON(),
+  });
 };
 
 // ─── PUT /api/auth/me ──────────────────────────────────────────────────────────
@@ -124,7 +138,9 @@ const updateAdminProfile = async (req, res) => {
       {
         name,
         username: normalizedUsername,
-        avatarUrl: req.file ? req.file.filename : req.user.avatarUrl || "",
+        avatarUrl: req.file
+          ? buildAssetUrl(req, req.file.filename)
+          : req.user.avatarUrl || "",
       },
       { new: true, runValidators: true },
     ).populate("role");
@@ -176,6 +192,8 @@ const deleteAccount = async (req, res) => {
     }
 
     await User.findByIdAndDelete(req.user._id);
+
+    res.clearCookie("accessToken", cookieOptions);
 
     return res.status(200).json({ message: "Account deleted successfully." });
   } catch (err) {

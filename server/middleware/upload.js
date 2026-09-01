@@ -12,13 +12,36 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
+
   limits: { fileSize: 5 * 1024 * 1024 },
+
   fileFilter: (req, file, callback) => {
+    console.log("File:", file.originalname);
+    console.log("Mimetype:", file.mimetype);
+
     if (!file.mimetype.startsWith("image/")) {
       return callback(new Error("Only image files are allowed."));
     }
+
     callback(null, true);
   },
+
+  // fileFilter: (req, file, callback) => {
+  //   console.log("File:", file.originalname);
+  //   console.log("Mimetype:", file.mimetype);
+
+  //   const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+  //   const extension = path.extname(file.originalname).toLowerCase();
+
+  //   if (
+  //     file.mimetype.startsWith("image/") ||
+  //     allowedExtensions.includes(extension)
+  //   ) {
+  //     return callback(null, true);
+  //   }
+
+  //   return callback(new Error("Only image files are allowed."));
+  // },
 });
 
 const normalizeProductArrays = (req, res, next) => {

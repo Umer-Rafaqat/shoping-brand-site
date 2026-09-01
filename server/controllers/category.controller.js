@@ -5,7 +5,10 @@ const Product = require("../models/Product");
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
-    return res.status(200).json({ categories });
+    return res.status(200).json({
+      message: "Categories fetched successfully.",
+      categories,
+    });
   } catch (err) {
     console.error("getAllCategories error:", err);
     return res.status(500).json({ message: "Server error. Try again." });

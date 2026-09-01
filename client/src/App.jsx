@@ -13,6 +13,9 @@ import AdminLayout from "@/pages/admin/AdminLayout";
 import Dashboard from "@/pages/admin/Dashboard";
 import Users from "@/pages/admin/Users";
 import Products from "@/pages/admin/Products";
+import ProductCreate from "@/pages/admin/ProductCreate";
+import ProductView from "@/pages/admin/ProductView";
+import ProductEdit from "@/pages/admin/ProductEdit";
 
 export default function App() {
   return (
@@ -68,6 +71,9 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="products" element={<Products />} />
+          <Route path="products/new" element={<ProductCreate />} />
+          <Route path="products/:id" element={<ProductView />} />
+          <Route path="products/:id/edit" element={<ProductEdit />} />
         </Route>
       </Routes>
     </div>
