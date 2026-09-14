@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { Search, Trash2, Pencil, Plus, X } from "lucide-react";
+import {
+  Search,
+  Trash2,
+  Pencil,
+  Plus,
+  X,
+  UserPlus,
+  UserRound,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   getUsersAPI,
@@ -8,6 +21,7 @@ import {
   deleteUserAPI,
 } from "@/api/admin.api";
 import Pagination from "@/components/Pagination";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
 const SEARCH_DEBOUNCE_MS = 400;
 const PAGE_SIZE = 10;
@@ -24,6 +38,8 @@ export default function Users() {
   const [error, setError] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [addingUser, setAddingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = async (pageArg, searchArg) => {
     setLoading(true);
@@ -67,11 +83,15 @@ export default function Users() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch]);
 
-  const handleDelete = async (target) => {
-    if (!confirm(`Delete ${target.name}'s account? This can't be undone.`))
-      return;
+  const handleDelete = (target) => {
+    setDeletingUser(target);
+  };
+
+  const confirmDelete = async () => {
+    setDeleting(true);
     try {
-      await deleteUserAPI(target._id);
+      await deleteUserAPI(deletingUser._id);
+      setDeletingUser(null);
       if (users.length === 1 && page > 1) {
         setPage((current) => current - 1);
       } else {
@@ -79,6 +99,8 @@ export default function Users() {
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete user.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -132,76 +154,78 @@ export default function Users() {
         ) : users.length === 0 ? (
           <p className="p-6 text-sm text-black/50">No users found.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-black/10 text-black/50">
-              <tr>
-                <th className="px-5 py-3 font-medium">Name</th>
-                <th className="px-5 py-3 font-medium">Email</th>
-                <th className="px-5 py-3 font-medium">Role</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Joined</th>
-                <th className="px-5 py-3 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => {
-                const isAdmin = u.role?.name === "admin";
-                return (
-                  <tr
-                    key={u._id}
-                    className="border-b border-black/5 last:border-0"
-                  >
-                    <td className="px-5 py-3 font-medium">{u.name}</td>
-                    <td className="px-5 py-3 text-black/60">{u.email}</td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                          isAdmin
-                            ? "bg-black text-white"
-                            : "bg-black/5 text-black/60"
-                        }`}
-                      >
-                        {u.role?.name}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusToggle />
-                    </td>
-                    <td className="px-5 py-3 text-black/50">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-3">
-                      {isAdmin ? (
-                        <span className="block text-right text-xs text-black/30">
-                          Not manageable
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-black/10 text-black/50">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Name</th>
+                  <th className="px-5 py-3 font-medium">Email</th>
+                  <th className="px-5 py-3 font-medium">Role</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Joined</th>
+                  <th className="px-5 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => {
+                  const isAdmin = u.role?.name === "admin";
+                  return (
+                    <tr
+                      key={u._id}
+                      className="border-b border-black/5 last:border-0"
+                    >
+                      <td className="px-5 py-3 font-medium">{u.name}</td>
+                      <td className="px-5 py-3 text-black/60">{u.email}</td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            isAdmin
+                              ? "bg-black text-white"
+                              : "bg-black/5 text-black/60"
+                          }`}
+                        >
+                          {u.role?.name}
                         </span>
-                      ) : (
-                        <div className="flex justify-end gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setEditingUser(u)}
-                            title="Edit user"
-                            className="text-black/50 hover:text-black"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                      </td>
+                      <td className="px-5 py-3">
+                        <StatusToggle />
+                      </td>
+                      <td className="px-5 py-3 text-black/50">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-3">
+                        {isAdmin ? (
+                          <span className="block text-right text-xs text-black/30">
+                            Not manageable
+                          </span>
+                        ) : (
+                          <div className="flex justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setEditingUser(u)}
+                              title="Edit user"
+                              className="text-black/50 hover:text-black"
+                            >
+                              <Pencil size={16} />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(u)}
-                            title="Delete user"
-                            className="text-red-400 hover:text-red-600"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(u)}
+                              title="Delete user"
+                              className="text-red-400 hover:text-red-600"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -223,6 +247,17 @@ export default function Users() {
           user={editingUser}
           onClose={() => setEditingUser(null)}
           onUpdated={handleUserUpdated}
+        />
+      )}
+
+      {deletingUser && (
+        <ConfirmDialog
+          title="Delete user"
+          message={`Delete ${deletingUser.name}'s account? This can't be undone.`}
+          confirmLabel="Delete"
+          loading={deleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeletingUser(null)}
         />
       )}
     </div>
@@ -253,6 +288,7 @@ function AddUserModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -284,74 +320,133 @@ function AddUserModal({ onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Add User</h2>
-          <button type="button" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
+      <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/5">
+            <UserPlus size={20} className="text-black/60" />
+          </span>
+          <h2 className="mt-3 text-lg font-bold">Add New User</h2>
+          <p className="mt-1 text-xs text-black/50">
+            Create a customer account manually.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-6 top-6 text-black/40 hover:text-black"
+        >
+          <X size={18} />
+        </button>
+
+        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
           <div>
-            <input
-              type="text"
-              value={form.name}
-              onChange={handleChange("name")}
-              placeholder="Full name"
-              className={`w-full rounded-full border px-4 py-2.5 text-sm outline-none ${
-                errors.name ? "border-red-400" : "border-black/15"
-              }`}
-            />
+            <label className="mb-1.5 block text-xs font-medium text-black/50">
+              Full name
+            </label>
+            <div className="relative">
+              <UserRound
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+              />
+              <input
+                type="text"
+                value={form.name}
+                onChange={handleChange("name")}
+                placeholder="Jane Doe"
+                className={`w-full rounded-xl border py-2.5 pl-11 pr-4 text-sm outline-none focus:border-black/40 ${
+                  errors.name ? "border-red-400" : "border-black/15"
+                }`}
+              />
+            </div>
             {errors.name && (
               <p className="mt-1 text-xs text-red-500">{errors.name}</p>
             )}
           </div>
 
           <div>
-            <input
-              type="email"
-              value={form.email}
-              onChange={handleChange("email")}
-              placeholder="Email address"
-              className={`w-full rounded-full border px-4 py-2.5 text-sm outline-none ${
-                errors.email ? "border-red-400" : "border-black/15"
-              }`}
-            />
+            <label className="mb-1.5 block text-xs font-medium text-black/50">
+              Email address
+            </label>
+            <div className="relative">
+              <Mail
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+              />
+              <input
+                type="email"
+                value={form.email}
+                onChange={handleChange("email")}
+                placeholder="jane@example.com"
+                className={`w-full rounded-xl border py-2.5 pl-11 pr-4 text-sm outline-none focus:border-black/40 ${
+                  errors.email ? "border-red-400" : "border-black/15"
+                }`}
+              />
+            </div>
             {errors.email && (
               <p className="mt-1 text-xs text-red-500">{errors.email}</p>
             )}
           </div>
 
           <div>
-            <input
-              type="password"
-              value={form.password}
-              onChange={handleChange("password")}
-              placeholder="Password (min 8 characters)"
-              className={`w-full rounded-full border px-4 py-2.5 text-sm outline-none ${
-                errors.password ? "border-red-400" : "border-black/15"
-              }`}
-            />
+            <label className="mb-1.5 block text-xs font-medium text-black/50">
+              Password
+            </label>
+            <div className="relative">
+              <Lock
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+              />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder="Min. 8 characters"
+                className={`w-full rounded-xl border py-2.5 pl-11 pr-11 text-sm outline-none focus:border-black/40 ${
+                  errors.password ? "border-red-400" : "border-black/15"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {errors.password && (
               <p className="mt-1 text-xs text-red-500">{errors.password}</p>
             )}
           </div>
 
-          {errors.form && <p className="text-xs text-red-500">{errors.form}</p>}
+          {errors.form && (
+            <p className="rounded-xl bg-brand-pink px-4 py-2.5 text-xs text-brand-red">
+              {errors.form}
+            </p>
+          )}
 
           <div className="mt-2 flex gap-3">
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-full bg-black py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-black py-2.5 text-sm font-medium text-white disabled:opacity-50"
             >
-              {saving ? "Creating..." : "Create User"}
+              {saving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create User"
+              )}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-black/15 px-5 py-2.5 text-sm"
+              disabled={saving}
+              className="rounded-full border border-black/15 px-5 py-2.5 text-sm disabled:opacity-50"
             >
               Cancel
             </button>

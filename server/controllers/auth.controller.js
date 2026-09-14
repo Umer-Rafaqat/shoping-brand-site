@@ -1,79 +1,38 @@
-const User = require("../models/User");
-const Role = require("../models/Role");
+const catchAsync = require("../utils/catchAsync");
 const { signAccessToken, getTokenMaxAgeMs } = require("../utils/token");
 const { cookieOptions } = require("../utils/cookieOptions");
 const { buildAssetUrl } = require("../utils/url");
+const authService = require("../services/auth.service");
+
+const setAuthCookie = (res, userId) => {
+  const accessToken = signAccessToken(userId);
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: getTokenMaxAgeMs(accessToken),
+  });
+};
 
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
-const signup = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+const signup = catchAsync(async (req, res) => {
+  const user = await authService.signup(req.body);
+  setAuthCookie(res, user._id);
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(409).json({ message: "Email already in use." });
-    }
-
-    const userRole = await Role.findOrCreate("user");
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: userRole._id,
-    });
-    await user.populate("role");
-
-    const accessToken = signAccessToken(user._id);
-
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: getTokenMaxAgeMs(accessToken),
-    });
-
-    return res.status(201).json({
-      message: "Account created successfully.",
-      user: user.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("signup error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+  return res.status(201).json({
+    message: "Account created successfully.",
+    user: user.toPublicJSON(),
+  });
+});
 
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+const login = catchAsync(async (req, res) => {
+  const user = await authService.login(req.body);
+  setAuthCookie(res, user._id);
 
-    const user = await User.findOne({ email })
-      .select("+password")
-      .populate("role");
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
-
-    const accessToken = signAccessToken(user._id);
-
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: getTokenMaxAgeMs(accessToken),
-    });
-
-    return res.status(200).json({
-      message: "Logged in successfully.",
-      user: user.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("login error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+  return res.status(200).json({
+    message: "Logged in successfully.",
+    user: user.toPublicJSON(),
+  });
+});
 
 // ─── POST /api/auth/logout ────────────────────────────────────────────────────
 const logout = (req, res) => {
@@ -91,116 +50,53 @@ const getMe = (req, res) => {
 };
 
 // ─── PUT /api/auth/me ──────────────────────────────────────────────────────────
-const updateProfile = async (req, res) => {
-  try {
-    const { name, email } = req.body;
+const updateProfile = catchAsync(async (req, res) => {
+  const avatarUrl = req.file
+    ? buildAssetUrl(req, req.file.filename)
+    : undefined;
 
-    if (email !== req.user.email) {
-      const existing = await User.findOne({
-        email,
-        _id: { $ne: req.user._id },
-      });
-      if (existing) {
-        return res.status(409).json({ message: "Email already in use." });
-      }
-    }
+  const updated = await authService.updateProfile(
+    req.user._id,
+    { ...req.body, avatarUrl },
+    req.user.email,
+  );
 
-    const updated = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, email },
-      { new: true, runValidators: true },
-    ).populate("role");
+  return res.status(200).json({
+    message: "Profile updated successfully.",
+    user: updated.toPublicJSON(),
+  });
+});
 
-    return res.status(200).json({
-      message: "Profile updated successfully.",
-      user: updated.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("updateProfile error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+// ─── PUT /api/auth/admin-profile ────────────────────────────────────────────────
+const updateAdminProfile = catchAsync(async (req, res) => {
+  const avatarUrl = req.file
+    ? buildAssetUrl(req, req.file.filename)
+    : req.user.avatarUrl || "";
 
-const updateAdminProfile = async (req, res) => {
-  try {
-    const { name, username } = req.body;
-    const normalizedUsername = username.toLowerCase();
-    const existing = await User.findOne({
-      username: normalizedUsername,
-      _id: { $ne: req.user._id },
-    });
-    if (existing) {
-      return res.status(409).json({ message: "Username already in use." });
-    }
+  const updated = await authService.updateAdminProfile(req.user._id, {
+    name: req.body.name,
+    username: req.body.username,
+    avatarUrl,
+  });
 
-    const updated = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        name,
-        username: normalizedUsername,
-        avatarUrl: req.file
-          ? buildAssetUrl(req, req.file.filename)
-          : req.user.avatarUrl || "",
-      },
-      { new: true, runValidators: true },
-    ).populate("role");
-
-    return res.status(200).json({
-      message: "Admin profile updated successfully.",
-      user: updated.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("updateAdminProfile error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+  return res.status(200).json({
+    message: "Admin profile updated successfully.",
+    user: updated.toPublicJSON(),
+  });
+});
 
 // ─── PUT /api/auth/change-password ─────────────────────────────────────────────
-const changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    const user = await User.findById(req.user._id).select("+password");
-
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ message: "Current password is incorrect." });
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    return res.status(200).json({ message: "Password changed successfully." });
-  } catch (err) {
-    console.error("changePassword error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+const changePassword = catchAsync(async (req, res) => {
+  await authService.changePassword(req.user._id, req.body);
+  return res.status(200).json({ message: "Password changed successfully." });
+});
 
 // ─── DELETE /api/auth/me ───────────────────────────────────────────────────────
-const deleteAccount = async (req, res) => {
-  try {
-    const { password } = req.body;
-
-    const user = await User.findById(req.user._id).select("+password");
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect password." });
-    }
-
-    await User.findByIdAndDelete(req.user._id);
-
-    res.clearCookie("accessToken", cookieOptions);
-
-    return res.status(200).json({ message: "Account deleted successfully." });
-  } catch (err) {
-    console.error("deleteAccount error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+const deleteAccount = catchAsync(async (req, res) => {
+  await authService.deleteAccount(req.user._id, req.body.password);
+  res.clearCookie("accessToken", cookieOptions);
+  return res.status(200).json({ message: "Account deleted successfully." });
+});
 
 module.exports = {
   signup,

@@ -1,12 +1,21 @@
-import { Trash2, Minus, Plus } from "lucide-react";
+import { Trash2, Minus, Plus, ImageOff } from "lucide-react";
+import { assetUrl } from "@/lib/assetUrl";
 
 export default function CartItem({ item, onQuantityChange, onRemove }) {
   const { id, name, image, price, size, color, quantity } = item;
 
   return (
     <div className="flex gap-4 py-4 first:pt-7">
-      <div className="h-[7rem] w-24 shrink-0 overflow-hidden rounded-2xl bg-surface-100 sm:h-28 sm:w-28">
-        <img src={image} alt={name} className="h-full w-full object-cover" />
+      <div className="flex h-[7rem] w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface-100 sm:h-28 sm:w-28">
+        {image ? (
+          <img
+            src={assetUrl(image)}
+            alt={name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <ImageOff size={24} className="text-black/20" />
+        )}
       </div>
 
       <div className="flex flex-1 flex-col justify-between">

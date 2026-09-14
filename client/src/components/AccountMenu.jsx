@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { LogOut, User as UserIcon } from "lucide-react";
 import userIcon from "../assets/user-icon.png";
 import { useAuth } from "@/context/AuthContext";
+import { assetUrl } from "@/lib/assetUrl";
 
 export default function AccountMenu({ iconSize = 22 }) {
   const { user, logout } = useAuth();
@@ -41,14 +42,22 @@ export default function AccountMenu({ iconSize = 22 }) {
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"
         aria-expanded={open}
-        className="flex items-center justify-center rounded-full bg-black font-satoshi font-bold text-white"
+        className="flex items-center justify-center overflow-hidden rounded-full bg-black font-satoshi font-bold text-white"
         style={{
           height: iconSize + 6,
           width: iconSize + 6,
           fontSize: iconSize * 0.5,
         }}
       >
-        {initial}
+        {user.avatarUrl ? (
+          <img
+            src={assetUrl(user.avatarUrl)}
+            alt={user.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          initial
+        )}
       </button>
 
       {open && (

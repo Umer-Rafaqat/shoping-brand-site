@@ -1,153 +1,71 @@
-const User = require("../models/User");
-const Role = require("../models/Role");
+const catchAsync = require("../utils/catchAsync");
+const { getPagination } = require("../utils/pagination");
+const { trimParam } = require("../utils/queryHelpers");
+const adminService = require("../services/admin.service");
 
 // ─── GET /api/admin/users ──────────────────────────────────────────────────────
-const getAllUsers = async (req, res) => {
-  try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 20);
-    const search = req.query.search?.trim();
+const getAllUsers = catchAsync(async (req, res) => {
+  const { page, limit, skip } = getPagination(req, 20);
 
-    // Never show the logged-in admin their own account in this list.
-    const filter = { _id: { $ne: req.user._id } };
+  const { users, total } = await adminService.getAllUsers({
+    page,
+    limit,
+    skip,
+    search: trimParam(req.query.search),
+    excludeId: req.user._id,
+  });
 
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .populate("role")
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      User.countDocuments(filter),
-    ]);
-
-    return res.status(200).json({
-      message: "Users fetched successfully.",
-      users: users.map((u) => u.toPublicJSON()),
-      page,
-      totalPages: Math.ceil(total / limit),
-      total,
-    });
-  } catch (err) {
-    console.error("getAllUsers error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+  return res.status(200).json({
+    message: "Users fetched successfully.",
+    users,
+    page,
+    totalPages: Math.ceil(total / limit),
+    total,
+  });
+});
 
 // ─── POST /api/admin/users ──────────────────────────────────────────────────────
-
-const createUser = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(409).json({ message: "Email already in use." });
-    }
-
-    const userRole = await Role.findOrCreate("user");
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: userRole._id,
-    });
-    await user.populate("role");
-
-    return res.status(201).json({
-      message: "User created successfully.",
-      user: user.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("createUser error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+const createUser = catchAsync(async (req, res) => {
+  const user = await adminService.createUser(req.body);
+  return res.status(201).json({ message: "User created successfully.", user });
+});
 
 // ─── GET /api/admin/users/:id ──────────────────────────────────────────────────
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).populate("role");
-    if (!user) return res.status(404).json({ message: "User not found." });
-
-    return res.status(200).json({
-      message: "User fetched successfully.",
-      user: user.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("getUserById error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+const getUserById = catchAsync(async (req, res) => {
+  const user = await adminService.getUserById(req.params.id);
+  return res.status(200).json({ message: "User fetched successfully.", user });
+});
 
 // ─── PUT /api/admin/users/:id ───────────────────────────────────────────────────
-
-const updateUser = async (req, res) => {
-  try {
-    const target = await User.findById(req.params.id).populate("role");
-    if (!target) return res.status(404).json({ message: "User not found." });
-
-    if (target.role?.name === "admin") {
-      return res
-        .status(403)
-        .json({ message: "Admin accounts can't be edited from here." });
-    }
-
-    const { name, email } = req.body;
-
-    if (email && email !== target.email) {
-      const existing = await User.findOne({ email, _id: { $ne: target._id } });
-      if (existing) {
-        return res.status(409).json({ message: "Email already in use." });
-      }
-    }
-
-    if (name !== undefined) target.name = name;
-    if (email !== undefined) target.email = email;
-    await target.save();
-
-    return res.status(200).json({
-      message: "User updated successfully.",
-      user: target.toPublicJSON(),
-    });
-  } catch (err) {
-    console.error("updateUser error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+const updateUser = catchAsync(async (req, res) => {
+  const user = await adminService.updateUser(req.params.id, req.body);
+  return res.status(200).json({ message: "User updated successfully.", user });
+});
 
 // ─── DELETE /api/admin/users/:id ───────────────────────────────────────────────
-const deleteUser = async (req, res) => {
-  try {
-    if (req.params.id === String(req.user._id)) {
-      return res
-        .status(400)
-        .json({ message: "You can't delete your own account here." });
-    }
+const deleteUser = catchAsync(async (req, res) => {
+  await adminService.deleteUser(req.params.id, req.user._id);
+  return res.status(200).json({ message: "User deleted successfully." });
+});
 
-    const target = await User.findById(req.params.id).populate("role");
-    if (!target) return res.status(404).json({ message: "User not found." });
+// ─── GET /api/admin/carts ───────────────────────────────────────────────────────
+const getAllCartActivity = catchAsync(async (req, res) => {
+  const { page, limit, skip } = getPagination(req, 20);
 
-    if (target.role?.name === "admin") {
-      return res
-        .status(403)
-        .json({ message: "Admin accounts can't be deleted from here." });
-    }
+  const { rows, total } = await adminService.getAllCartActivity({
+    page,
+    limit,
+    skip,
+  });
 
-    await User.findByIdAndDelete(req.params.id);
-
-    return res.status(200).json({ message: "User deleted successfully." });
-  } catch (err) {
-    console.error("deleteUser error:", err);
-    return res.status(500).json({ message: "Server error. Try again." });
-  }
-};
+  return res.status(200).json({
+    message: "Cart activity fetched successfully.",
+    rows,
+    page,
+    totalPages: Math.ceil(total / limit),
+    total,
+  });
+});
 
 module.exports = {
   getAllUsers,
@@ -155,4 +73,5 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  getAllCartActivity,
 };

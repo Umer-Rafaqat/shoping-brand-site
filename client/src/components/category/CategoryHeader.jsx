@@ -14,9 +14,10 @@ export default function CategoryHeader({
   showingTo,
   total,
   onOpenFilters,
+  sort,
+  onSortChange,
 }) {
   const [sortOpen, setSortOpen] = useState(false);
-  const [selectedSort, setSelectedSort] = useState(SORT_OPTIONS[0]);
 
   const countText = `Showing ${showingFrom}-${showingTo} of ${total} Products`;
 
@@ -55,7 +56,7 @@ export default function CategoryHeader({
               aria-expanded={sortOpen}
               className="flex items-center gap-1 font-satoshi text-sm text-black"
             >
-              Sort by: <span className="font-medium">{selectedSort}</span>
+              Sort by: <span className="font-medium">{sort}</span>
               <ChevronDown
                 size={14}
                 className={
@@ -81,15 +82,15 @@ export default function CategoryHeader({
                       <button
                         type="button"
                         role="option"
-                        aria-selected={option === selectedSort}
+                        aria-selected={option === sort}
                         onClick={() => {
-                          setSelectedSort(option);
+                          onSortChange(option);
                           setSortOpen(false);
                         }}
                         className="flex w-full items-center justify-between px-4 py-2.5 text-left font-satoshi text-sm text-black/70 hover:bg-surface-100 hover:text-black"
                       >
                         {option}
-                        {option === selectedSort && <Check size={14} />}
+                        {option === sort && <Check size={14} />}
                       </button>
                     </li>
                   ))}

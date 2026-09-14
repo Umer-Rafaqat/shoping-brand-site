@@ -24,3 +24,8 @@ export const updateUserAPI = async (userId, { name, email }) => {
 export const deleteUserAPI = async (userId) => {
   await api.delete(`/admin/users/${userId}`);
 };
+
+export const getCartActivityAPI = async ({ page = 1, limit = 20 } = {}) => {
+  const { data } = await api.get("/admin/carts", { params: { page, limit } });
+  return data;
+};

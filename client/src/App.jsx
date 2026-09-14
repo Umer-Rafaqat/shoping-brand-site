@@ -13,6 +13,7 @@ import AdminLayout from "@/pages/admin/AdminLayout";
 import Dashboard from "@/pages/admin/Dashboard";
 import Users from "@/pages/admin/Users";
 import Products from "@/pages/admin/Products";
+import CartActivity from "@/pages/admin/CartActivity";
 import ProductCreate from "@/pages/admin/ProductCreate";
 import ProductView from "@/pages/admin/ProductView";
 import ProductEdit from "@/pages/admin/ProductEdit";
@@ -22,7 +23,7 @@ export default function App() {
     <div className="w-full overflow-x-hidden">
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/product/:slug" element={<ProductDetail />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/category/:slug" element={<Category />} />
 
         <Route
@@ -71,6 +72,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="products" element={<Products />} />
+          <Route path="cart-activity" element={<CartActivity />} />
           <Route path="products/new" element={<ProductCreate />} />
           <Route path="products/:id" element={<ProductView />} />
           <Route path="products/:id/edit" element={<ProductEdit />} />

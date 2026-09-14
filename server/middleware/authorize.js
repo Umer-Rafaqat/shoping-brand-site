@@ -1,14 +1,18 @@
+const AppError = require("../utils/AppError");
+
 const authorize = (...allowedRoleNames) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated." });
+      return next(
+        new AppError("You must be logged in to access this resource.", 401),
+      );
     }
+
     const roleName = req.user.role?.name;
     if (!allowedRoleNames.includes(roleName)) {
-      return res
-        .status(403)
-        .json({ message: "You don't have permission to do that." });
+      return next(new AppError("You don't have permission to do that.", 403));
     }
+
     next();
   };
 };

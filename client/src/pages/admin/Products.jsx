@@ -7,6 +7,7 @@ import {
   getCategoriesAPI,
 } from "@/api/products.api";
 import Pagination from "@/components/Pagination";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { assetUrl } from "@/lib/assetUrl";
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -27,6 +28,8 @@ export default function Products() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingProduct, setDeletingProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchProducts = async (pageArg, searchArg, categoryArg, sizeArg) => {
     setLoading(true);
@@ -71,10 +74,15 @@ export default function Products() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch, categoryFilter, sizeFilter]);
 
-  const handleDelete = async (product) => {
-    if (!confirm(`Delete "${product.name}"? This can't be undone.`)) return;
+  const handleDelete = (product) => {
+    setDeletingProduct(product);
+  };
+
+  const confirmDelete = async () => {
+    setDeleting(true);
     try {
-      await deleteProductAPI(product._id);
+      await deleteProductAPI(deletingProduct._id);
+      setDeletingProduct(null);
       if (products.length === 1 && page > 1) {
         setPage((current) => current - 1);
       } else {
@@ -82,6 +90,8 @@ export default function Products() {
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete product.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -151,96 +161,98 @@ export default function Products() {
         ) : products.length === 0 ? (
           <p className="p-6 text-sm text-black/50">No products found.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-black/10 text-black/60">
-              <tr>
-                <th className="px-5 py-3 font-black ">Product</th>
-                <th className="px-5 py-3 font-black">Category</th>
-                <th className="px-5 py-3 font-black">Price</th>
-                <th className="px-5 py-3 font-black">Stock</th>
-                <th className="px-5 py-3 font-black text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr
-                  key={p._id}
-                  className="border-b border-black/5 last:border-0"
-                >
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/5">
-                        {p.images?.[0] ? (
-                          <img
-                            src={assetUrl(p.images[0])}
-                            alt={p.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <ImageOff size={16} className="text-black/30" />
-                        )}
-                      </div>
-                      <span className="font-medium">{p.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-black/60">
-                    {p.category?.name || "—"}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="font-medium">${p.price}</span>
-                    {p.oldPrice > p.price && (
-                      <span className="ml-2 text-xs text-black/40 line-through">
-                        ${p.oldPrice}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={
-                        p.stock === 0
-                          ? "text-red-500"
-                          : p.stock < 10
-                            ? "text-yellow-600"
-                            : "text-black/60"
-                      }
-                    >
-                      {p.stock}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/admin/products/${p._id}`)}
-                        title="View product"
-                        className="text-black/50 hover:text-black"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/admin/products/${p._id}/edit`)
-                        }
-                        title="Edit product"
-                        className="text-black/50 hover:text-black"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(p)}
-                        title="Delete product"
-                        className="text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-black/10 text-black/60">
+                <tr>
+                  <th className="px-5 py-3 font-black ">Product</th>
+                  <th className="px-5 py-3 font-black">Category</th>
+                  <th className="px-5 py-3 font-black">Price</th>
+                  <th className="px-5 py-3 font-black">Stock</th>
+                  <th className="px-5 py-3 font-black text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr
+                    key={p._id}
+                    className="border-b border-black/5 last:border-0"
+                  >
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/5">
+                          {p.images?.[0] ? (
+                            <img
+                              src={assetUrl(p.images[0])}
+                              alt={p.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <ImageOff size={16} className="text-black/30" />
+                          )}
+                        </div>
+                        <span className="font-medium">{p.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-black/60">
+                      {p.category?.name || "—"}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="font-medium">${p.price}</span>
+                      {p.oldPrice > p.price && (
+                        <span className="ml-2 text-xs text-black/40 line-through">
+                          ${p.oldPrice}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className={
+                          p.stock === 0
+                            ? "text-red-500"
+                            : p.stock < 10
+                              ? "text-yellow-600"
+                              : "text-black/60"
+                        }
+                      >
+                        {p.stock}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/products/${p._id}`)}
+                          title="View product"
+                          className="text-black/50 hover:text-black"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/admin/products/${p._id}/edit`)
+                          }
+                          title="Edit product"
+                          className="text-black/50 hover:text-black"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(p)}
+                          title="Delete product"
+                          className="text-red-400 hover:text-red-600"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -249,6 +261,17 @@ export default function Products() {
         totalPages={totalPages}
         onPageChange={setPage}
       />
+
+      {deletingProduct && (
+        <ConfirmDialog
+          title="Delete product"
+          message={`Delete "${deletingProduct.name}"? This can't be undone.`}
+          confirmLabel="Delete"
+          loading={deleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeletingProduct(null)}
+        />
+      )}
     </div>
   );
 }

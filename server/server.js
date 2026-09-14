@@ -5,12 +5,14 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const multer = require("multer");
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
 const productRoutes = require("./routes/product.routes");
 const categoryRoutes = require("./routes/category.routes");
+const cartRoutes = require("./routes/cart.routes");
 
 const app = express();
 
@@ -39,17 +41,34 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/cart", cartRoutes);
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found.` });
 });
 
-// Global error handler
+// Global error handler — catchAsync forwards every service/controller error here.
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || "Internal server error.",
+  if (err instanceof multer.MulterError) {
+    const messages = {
+      LIMIT_UNEXPECTED_FIELD: `Unexpected upload field "${err.field}". Use "images" as the field name.`,
+      LIMIT_FILE_SIZE: "Each image must be 5MB or smaller.",
+      LIMIT_FILE_COUNT: "You can upload at most 5 images.",
+    };
+    return res.status(400).json({
+      message: messages[err.code] || "There was a problem with your upload.",
+    });
+  }
+
+  const statusCode = err.statusCode || err.status || 500;
+
+  if (!err.isOperational) {
+    console.error(err.stack);
+  }
+
+  res.status(statusCode).json({
+    message: err.isOperational ? err.message : "Server error. Try again.",
   });
 });
 

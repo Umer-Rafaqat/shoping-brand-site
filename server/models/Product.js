@@ -18,7 +18,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Price is required"],
       min: [0, "Price can't be negative"],
-      index: true, // speeds up price range filters (minPrice/maxPrice) and priceAsc/priceDesc sorting
+      index: true,
     },
     oldPrice: {
       type: Number,

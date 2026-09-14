@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { updateProfileAPI, changePasswordAPI } from "@/api/auth.api";
 import { Button } from "@/components/ui/button";
+import { ImagePlus } from "lucide-react";
+import { assetUrl } from "@/lib/assetUrl";
 
 const inputClass = (hasError) =>
   `w-full rounded-full border px-5 py-3 text-sm outline-none placeholder:text-black/40 ${
@@ -32,9 +34,25 @@ function ProfileSection({ user, onUpdated }) {
     name: user?.name || "",
     email: user?.email || "",
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    if (!avatarFile) {
+      setAvatarPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(avatarFile);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatarFile]);
+
+  const initial = (user?.name || "?").charAt(0).toUpperCase();
+  const currentAvatarUrl =
+    avatarPreview || (user?.avatarUrl ? assetUrl(user.avatarUrl) : null);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -47,8 +65,9 @@ function ProfileSection({ user, onUpdated }) {
     setSaving(true);
     setMessage(null);
     try {
-      const updated = await updateProfileAPI(form);
+      const updated = await updateProfileAPI({ ...form, avatarFile });
       onUpdated(updated);
+      setAvatarFile(null);
       setMessage({ type: "success", text: "Profile updated." });
     } catch (err) {
       const data = err.response?.data;
@@ -74,6 +93,30 @@ function ProfileSection({ user, onUpdated }) {
       <h2 className="text-lg font-bold">Profile</h2>
 
       <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black/5">
+            {currentAvatarUrl ? (
+              <img
+                src={currentAvatarUrl}
+                alt={user?.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xl font-bold text-black/30">{initial}</span>
+            )}
+          </div>
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-xs font-medium hover:bg-black/5">
+            <ImagePlus size={14} />
+            Change photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+              className="hidden"
+            />
+          </label>
+        </div>
+
         <div>
           <input
             type="text"

@@ -21,8 +21,15 @@ export const getMeAPI = async () => {
 
 // ─── My Account (CRUD) ───────────────────────────────────────
 
-export const updateProfileAPI = async ({ name, email }) => {
-  const { data } = await api.put("/auth/me", { name, email });
+export const updateProfileAPI = async ({ name, email, avatarFile }) => {
+  const payload = new FormData();
+  payload.append("name", name);
+  payload.append("email", email);
+  if (avatarFile) payload.append("avatar", avatarFile);
+
+  const { data } = await api.put("/auth/me", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data.user;
 };
 

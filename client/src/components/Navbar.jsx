@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import userIcon from "../assets/user-icon.png";
 import AccountMenu from "@/components/AccountMenu";
 import { Search, ShoppingCart, Menu, ChevronDown, X } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 const links = [
   { label: "Shop", hasDropdown: true },
@@ -15,6 +16,7 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <header className="w-full border-b border-black/10 bg-white">
@@ -39,8 +41,13 @@ export default function Navbar() {
               <Search size={28} />
             </button>
 
-            <Link to="/cart">
+            <Link to="/cart" className="relative">
               <ShoppingCart size={28} />
+              {itemCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[10px] font-medium text-white">
+                  {itemCount}
+                </span>
+              )}
             </Link>
 
             <AccountMenu iconSize={28} />
@@ -79,8 +86,13 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link to="/cart">
+            <Link to="/cart" className="relative">
               <ShoppingCart />
+              {itemCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[10px] font-medium text-white">
+                  {itemCount}
+                </span>
+              )}
             </Link>
 
             <AccountMenu iconSize={22} />

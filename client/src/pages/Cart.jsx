@@ -6,8 +6,8 @@ import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/product-detail/Breadcrumb";
 import CartItem from "@/components/cart/CartItem";
 import OrderSummary from "@/components/cart/OrderSummary";
+import { useCart } from "@/context/CartContext";
 import {
-  initialCartItems,
   DELIVERY_FEE,
   DEFAULT_DISCOUNT_PERCENT,
   PROMO_CODES,
@@ -16,7 +16,7 @@ import {
 const CONTAINER = "mx-auto max-w-[1240px] px-4 lg:px-0";
 
 export default function Cart() {
-  const [items, setItems] = useState(initialCartItems);
+  const { items, loading, updateQuantity, removeItem } = useCart();
   const [discountPercent, setDiscountPercent] = useState(
     DEFAULT_DISCOUNT_PERCENT,
   );
@@ -27,13 +27,15 @@ export default function Cart() {
   );
 
   const handleQuantityChange = (id, quantity) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item)),
-    );
+    updateQuantity(id, quantity).catch(() => {
+      // Silently ignored for now — e.g. requested more than available stock.
+      // The item's quantity simply won't change since state only updates
+      // from the server's response.
+    });
   };
 
   const handleRemove = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    removeItem(id).catch(() => {});
   };
 
   const handleApplyPromo = (code) => {
@@ -57,7 +59,11 @@ export default function Cart() {
           Your Cart
         </h1>
 
-        {items.length > 0 ? (
+        {loading ? (
+          <p className="mb-16 text-center text-sm text-black/50">
+            Loading your cart...
+          </p>
+        ) : items.length > 0 ? (
           <div className="mb-16 flex flex-col gap-8 lg:flex-row lg:items-start">
             <div className="divide-y divide-black/10 rounded-2xl border border-black/10 px-6 lg:flex-1">
               {items.map((item) => (
