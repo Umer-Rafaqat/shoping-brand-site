@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const Role = require("../models/Role");
 const Cart = require("../models/Cart");
+const Order = require("../models/Order");
+const Product = require("../models/Product");
 const AppError = require("../utils/AppError");
 const { searchRegex } = require("../utils/queryHelpers");
 
@@ -85,9 +87,6 @@ const deleteUser = async (id, requestingUserId) => {
   await User.findByIdAndDelete(id);
 };
 
-// Flattens every user's cart into individual rows (one row per line item)
-// for the admin's "Cart Activity" table — kept as a simple on-demand read
-// (fetched when the admin opens the page), not a real-time push feed.
 const getAllCartActivity = async ({ page, limit, skip }) => {
   const carts = await Cart.find({ "items.0": { $exists: true } })
     .populate("user", "name email")
@@ -123,6 +122,51 @@ const getAllCartActivity = async ({ page, limit, skip }) => {
   return { rows: paginatedRows, total };
 };
 
+// ─── Orders (admin) ─────────────────────────────────────────────────────────────
+const getAllOrders = async ({ page, limit, skip, status }) => {
+  const filter = {};
+  if (status) filter.status = status;
+
+  const [orders, total] = await Promise.all([
+    Order.find(filter)
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Order.countDocuments(filter),
+  ]);
+
+  return { orders, total };
+};
+
+const getOrderById = async (orderId) => {
+  const order = await Order.findById(orderId)
+    .populate("user", "name email")
+    .lean();
+  if (!order) throw new AppError("Order not found.", 404);
+  return order;
+};
+
+const updateOrderStatus = async (orderId, status) => {
+  const order = await Order.findById(orderId);
+  if (!order) throw new AppError("Order not found.", 404);
+
+  if (status === "cancelled" && order.status !== "cancelled") {
+    await Promise.all(
+      order.items.map((item) =>
+        Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+        }),
+      ),
+    );
+  }
+
+  order.status = status;
+  await order.save();
+  return order;
+};
+
 module.exports = {
   getAllUsers,
   createUser,
@@ -130,4 +174,7 @@ module.exports = {
   updateUser,
   deleteUser,
   getAllCartActivity,
+  getAllOrders,
+  getOrderById,
+  updateOrderStatus,
 };

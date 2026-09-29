@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { updateProfileAPI, changePasswordAPI } from "@/api/auth.api";
 import { Button } from "@/components/ui/button";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Package } from "lucide-react";
 import { assetUrl } from "@/lib/assetUrl";
 
 const inputClass = (hasError) =>
@@ -22,6 +23,22 @@ export default function Account() {
 
       <ProfileSection user={user} onUpdated={updateUser} />
       <div className="my-10 border-t border-black/10" />
+
+      <section>
+        <h2 className="text-lg font-bold">Orders</h2>
+        <p className="mt-1 text-sm text-black/60">
+          View your order history and track current orders.
+        </p>
+        <Link
+          to="/orders"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-black/15 px-5 py-2.5 text-sm font-medium hover:bg-black/5"
+        >
+          <Package size={16} />
+          View Order History
+        </Link>
+      </section>
+      <div className="my-10 border-t border-black/10" />
+
       <PasswordSection />
       <div className="my-10 border-t border-black/10" />
       <DangerZone onDelete={removeAccount} />

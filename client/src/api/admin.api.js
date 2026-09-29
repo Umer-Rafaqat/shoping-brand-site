@@ -29,3 +29,24 @@ export const getCartActivityAPI = async ({ page = 1, limit = 20 } = {}) => {
   const { data } = await api.get("/admin/carts", { params: { page, limit } });
   return data;
 };
+
+export const getAllOrdersAPI = async ({
+  page = 1,
+  limit = 10,
+  status = "",
+} = {}) => {
+  const { data } = await api.get("/admin/orders", {
+    params: { page, limit, status },
+  });
+  return data;
+};
+
+export const getOrderByIdAdminAPI = async (id) => {
+  const { data } = await api.get(`/admin/orders/${id}`);
+  return data.order;
+};
+
+export const updateOrderStatusAPI = async (id, status) => {
+  const { data } = await api.put(`/admin/orders/${id}/status`, { status });
+  return data.order;
+};

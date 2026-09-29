@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { Package } from "lucide-react";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Newsletter from "@/components/Newsletter";
@@ -7,19 +9,12 @@ import Breadcrumb from "@/components/product-detail/Breadcrumb";
 import CartItem from "@/components/cart/CartItem";
 import OrderSummary from "@/components/cart/OrderSummary";
 import { useCart } from "@/context/CartContext";
-import {
-  DELIVERY_FEE,
-  DEFAULT_DISCOUNT_PERCENT,
-  PROMO_CODES,
-} from "@/data/cart";
+import { DELIVERY_FEE } from "@/data/cart";
 
 const CONTAINER = "mx-auto max-w-[1240px] px-4 lg:px-0";
 
 export default function Cart() {
   const { items, loading, updateQuantity, removeItem } = useCart();
-  const [discountPercent, setDiscountPercent] = useState(
-    DEFAULT_DISCOUNT_PERCENT,
-  );
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -38,15 +33,6 @@ export default function Cart() {
     removeItem(id).catch(() => {});
   };
 
-  const handleApplyPromo = (code) => {
-    const upper = code.toUpperCase();
-    if (PROMO_CODES[upper] != null) {
-      setDiscountPercent(PROMO_CODES[upper]);
-      return true;
-    }
-    return false;
-  };
-
   return (
     <div className="w-full overflow-x-hidden">
       <AnnouncementBar />
@@ -55,9 +41,18 @@ export default function Cart() {
       <div className={CONTAINER}>
         <Breadcrumb items={["Home", "Cart"]} />
 
-        <h1 className="mb-8 font-integral text-3xl font-bold uppercase sm:text-4xl">
-          Your Cart
-        </h1>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-integral text-3xl font-bold uppercase sm:text-4xl">
+            Your Cart
+          </h1>
+          <Link
+            to="/orders"
+            className="flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-sm font-medium hover:bg-black/5"
+          >
+            <Package size={16} />
+            My Orders
+          </Link>
+        </div>
 
         {loading ? (
           <p className="mb-16 text-center text-sm text-black/50">
@@ -77,12 +72,7 @@ export default function Cart() {
             </div>
 
             <div className="lg:w-[380px]">
-              <OrderSummary
-                subtotal={subtotal}
-                discountPercent={discountPercent}
-                deliveryFee={DELIVERY_FEE}
-                onApplyPromo={handleApplyPromo}
-              />
+              <OrderSummary subtotal={subtotal} deliveryFee={DELIVERY_FEE} />
             </div>
           </div>
         ) : (

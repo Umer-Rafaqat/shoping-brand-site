@@ -1,28 +1,10 @@
-import { useState } from "react";
-import { Tag, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function OrderSummary({
-  subtotal,
-  discountPercent,
-  deliveryFee,
-  onApplyPromo,
-}) {
-  const [promoCode, setPromoCode] = useState("");
-  const [promoMessage, setPromoMessage] = useState(null);
-
-  const discountAmount = Math.round((subtotal * discountPercent) / 100);
-  const total = subtotal - discountAmount + deliveryFee;
-
-  const handleApply = () => {
-    if (!promoCode.trim()) return;
-    const success = onApplyPromo(promoCode.trim());
-    setPromoMessage(
-      success
-        ? { type: "success", text: "Promo code applied!" }
-        : { type: "error", text: "Invalid promo code." },
-    );
-  };
+export default function OrderSummary({ subtotal, deliveryFee }) {
+  const navigate = useNavigate();
+  const total = subtotal + deliveryFee;
 
   return (
     <div className="rounded-2xl border border-black/10 p-5">
@@ -32,10 +14,6 @@ export default function OrderSummary({
         <div className="flex items-center justify-between">
           <span className="text-black/50">Subtotal</span>
           <span className="font-medium">${subtotal}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-black/50">Discount (-{discountPercent}%)</span>
-          <span className="font-medium text-red-500">-${discountAmount}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-black/50">Delivery Fee</span>
@@ -50,33 +28,11 @@ export default function OrderSummary({
         <span className="font-satoshi text-xl font-bold">${total}</span>
       </div>
 
-      <div className="mt-8 flex items-center gap-3">
-        <div className="flex flex-1 items-center gap-2 rounded-full bg-surface-100 px-4 py-3">
-          <Tag size={16} className="shrink-0 text-black/40" />
-          <input
-            type="text"
-            value={promoCode}
-            onChange={(e) => setPromoCode(e.target.value)}
-            placeholder="Add promo code"
-            className="w-full bg-transparent font-satoshi text-sm outline-none placeholder:text-black/40"
-          />
-        </div>
-        <Button onClick={handleApply} className="sm:px-8">
-          Apply
-        </Button>
-      </div>
-
-      {promoMessage && (
-        <p
-          className={`mt-2 font-satoshi text-xs ${
-            promoMessage.type === "success" ? "text-green-600" : "text-red-500"
-          }`}
-        >
-          {promoMessage.text}
-        </p>
-      )}
-
-      <Button size="lg" className="mt-5 w-full gap-2">
+      <Button
+        size="lg"
+        onClick={() => navigate("/checkout")}
+        className="mt-8 w-full gap-2"
+      >
         Go to Checkout
         <ArrowRight size={18} />
       </Button>

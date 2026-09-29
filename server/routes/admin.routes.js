@@ -6,6 +6,9 @@ const {
   updateUser,
   deleteUser,
   getAllCartActivity,
+  getAllOrders,
+  getOrderById,
+  updateOrderStatus,
 } = require("../controllers/admin.controller");
 const {
   getAllProducts,
@@ -29,6 +32,7 @@ const {
 } = require("../validations/admin.validation");
 const { productSchema } = require("../validations/product.validation");
 const { categorySchema } = require("../validations/category.validation");
+const { updateOrderStatusSchema } = require("../validations/order.validation");
 
 const router = express.Router();
 
@@ -67,5 +71,14 @@ router.delete("/categories/:id", deleteCategory);
 
 // ─── Cart Activity ────────────────────────────────────────────────────────────
 router.get("/carts", getAllCartActivity);
+
+// ─── Orders ─────────────────────────────────────────────────────────────────────
+router.get("/orders", getAllOrders);
+router.get("/orders/:id", getOrderById);
+router.put(
+  "/orders/:id/status",
+  validate(updateOrderStatusSchema),
+  updateOrderStatus,
+);
 
 module.exports = router;

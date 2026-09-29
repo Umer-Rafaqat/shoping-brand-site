@@ -53,6 +53,15 @@ export function CartProvider({ children }) {
     setItems(updated);
   }, []);
 
+  // Lets a page force a re-fetch after something outside the usual
+  // add/update/remove flow changed the cart server-side (e.g. placing an
+  // order clears it).
+  const refreshCart = useCallback(async () => {
+    if (!user) return;
+    const updated = await getCartAPI();
+    setItems(updated);
+  }, [user]);
+
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -64,6 +73,7 @@ export function CartProvider({ children }) {
         addToCart,
         updateQuantity,
         removeItem,
+        refreshCart,
       }}
     >
       {children}

@@ -67,6 +67,43 @@ const getAllCartActivity = catchAsync(async (req, res) => {
   });
 });
 
+// ─── GET /api/admin/orders ───────────────────────────────────────────────────
+const getAllOrders = catchAsync(async (req, res) => {
+  const { page, limit, skip } = getPagination(req, 10);
+
+  const { orders, total } = await adminService.getAllOrders({
+    page,
+    limit,
+    skip,
+    status: req.query.status,
+  });
+
+  return res.status(200).json({
+    message: "Orders fetched successfully.",
+    orders,
+    page,
+    totalPages: Math.ceil(total / limit),
+    total,
+  });
+});
+
+// ─── GET /api/admin/orders/:id ──────────────────────────────────────────────
+const getOrderById = catchAsync(async (req, res) => {
+  const order = await adminService.getOrderById(req.params.id);
+  return res
+    .status(200)
+    .json({ message: "Order fetched successfully.", order });
+});
+
+// ─── PUT /api/admin/orders/:id/status ────────────────────────────────────────
+const updateOrderStatus = catchAsync(async (req, res) => {
+  const order = await adminService.updateOrderStatus(
+    req.params.id,
+    req.body.status,
+  );
+  return res.status(200).json({ message: "Order status updated.", order });
+});
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -74,4 +111,7 @@ module.exports = {
   updateUser,
   deleteUser,
   getAllCartActivity,
+  getAllOrders,
+  getOrderById,
+  updateOrderStatus,
 };

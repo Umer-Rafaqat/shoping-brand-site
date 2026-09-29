@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Package } from "lucide-react";
 import userIcon from "../assets/user-icon.png";
 import { useAuth } from "@/context/AuthContext";
 import { assetUrl } from "@/lib/assetUrl";
@@ -78,6 +78,15 @@ export default function AccountMenu({ iconSize = 22 }) {
           >
             <UserIcon size={16} />
             My Account
+          </Link>
+
+          <Link
+            to="/orders"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 font-satoshi text-sm text-black/70 hover:bg-surface-100 hover:text-black"
+          >
+            <Package size={16} />
+            My Orders
           </Link>
 
           <button

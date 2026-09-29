@@ -5,6 +5,7 @@ import {
   Users as UsersIcon,
   Package,
   ShoppingCart,
+  ClipboardList,
   LogOut,
   UserRound,
   Menu,
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/users", label: "Users", icon: UsersIcon },
   { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/orders", label: "Orders", icon: ClipboardList },
   { to: "/admin/cart-activity", label: "Cart Activity", icon: ShoppingCart },
 ];
 

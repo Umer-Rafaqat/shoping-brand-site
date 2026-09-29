@@ -3,6 +3,9 @@ import Home from "@/pages/Home";
 import ProductDetail from "@/pages/ProductDetail";
 import Category from "@/pages/Category";
 import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import OrderConfirmation from "@/pages/OrderConfirmation";
+import OrderHistory from "@/pages/OrderHistory";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -14,6 +17,8 @@ import Dashboard from "@/pages/admin/Dashboard";
 import Users from "@/pages/admin/Users";
 import Products from "@/pages/admin/Products";
 import CartActivity from "@/pages/admin/CartActivity";
+import Orders from "@/pages/admin/Orders";
+import OrderView from "@/pages/admin/OrderView";
 import ProductCreate from "@/pages/admin/ProductCreate";
 import ProductView from "@/pages/admin/ProductView";
 import ProductEdit from "@/pages/admin/ProductEdit";
@@ -31,6 +36,33 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/order-confirmation/:id"
+          element={
+            <ProtectedRoute>
+              <OrderConfirmation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrderHistory />
             </ProtectedRoute>
           }
         />
@@ -73,6 +105,8 @@ export default function App() {
           <Route path="users" element={<Users />} />
           <Route path="products" element={<Products />} />
           <Route path="cart-activity" element={<CartActivity />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="orders/:id" element={<OrderView />} />
           <Route path="products/new" element={<ProductCreate />} />
           <Route path="products/:id" element={<ProductView />} />
           <Route path="products/:id/edit" element={<ProductEdit />} />
