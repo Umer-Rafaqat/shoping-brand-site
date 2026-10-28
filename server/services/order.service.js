@@ -3,10 +3,15 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const AppError = require("../utils/AppError");
 const { getNextSequence } = require("../utils/counter");
+const { settledOrdersFilter } = require("../utils/orderFilters");
 
 const DELIVERY_FEE = 15;
 
-const createOrder = async (userId, { shippingAddress }) => {
+const visibleToCustomer = (userId) => ({
+  user: userId,
+  ...settledOrdersFilter,
+});
+const buildOrderDraft = async (userId) => {
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
   if (!cart || cart.items.length === 0) {
@@ -14,6 +19,7 @@ const createOrder = async (userId, { shippingAddress }) => {
   }
 
   const orderItems = [];
+
   for (const item of cart.items) {
     const product = item.product;
 
@@ -23,6 +29,7 @@ const createOrder = async (userId, { shippingAddress }) => {
         400,
       );
     }
+
     if (product.stock < item.quantity) {
       throw new AppError(
         `Only ${product.stock} left in stock for "${product.name}".`,
@@ -45,7 +52,19 @@ const createOrder = async (userId, { shippingAddress }) => {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const totalAmount = subtotal + DELIVERY_FEE;
+
+  return {
+    cart,
+    orderItems,
+    subtotal,
+    totalAmount: subtotal + DELIVERY_FEE,
+  };
+};
+
+const createOrder = async (userId, { shippingAddress }) => {
+  const { cart, orderItems, subtotal, totalAmount } =
+    await buildOrderDraft(userId);
+
   const orderNumber = await getNextSequence("orderNumber");
 
   const order = await Order.create({
@@ -60,7 +79,6 @@ const createOrder = async (userId, { shippingAddress }) => {
     status: "pending",
   });
 
-  // Decrement stock now that the order is confirmed.
   await Promise.all(
     orderItems.map((item) =>
       Product.findByIdAndUpdate(item.product, {
@@ -69,36 +87,66 @@ const createOrder = async (userId, { shippingAddress }) => {
     ),
   );
 
-  // The order now has its own permanent copy of everything — the cart's job
-  // is done, so it's cleared.
   cart.items = [];
   await cart.save();
 
   return order;
 };
 
+const createStripeOrder = async (userId, { shippingAddress }) => {
+  const { orderItems, subtotal, totalAmount } = await buildOrderDraft(userId);
+
+  const orderNumber = await getNextSequence("orderNumber");
+
+  return Order.create({
+    orderNumber,
+    user: userId,
+    items: orderItems,
+    shippingAddress,
+    subtotal,
+    deliveryFee: DELIVERY_FEE,
+    totalAmount,
+    paymentMethod: "STRIPE",
+    paymentStatus: "unpaid",
+    status: "pending",
+  });
+};
+
 const getMyOrders = async (userId, { page, limit, skip }) => {
+  const filter = visibleToCustomer(userId);
+
   const [orders, total] = await Promise.all([
-    Order.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    Order.countDocuments({ user: userId }),
+    Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Order.countDocuments(filter),
   ]);
 
   return { orders, total };
 };
 
 const getMyOrderById = async (userId, orderId) => {
-  const order = await Order.findOne({ _id: orderId, user: userId }).lean();
+  const order = await Order.findOne({
+    _id: orderId,
+    user: userId,
+  }).lean();
+
   if (!order) throw new AppError("Order not found.", 404);
   return order;
 };
 
 const cancelMyOrder = async (userId, orderId) => {
-  const order = await Order.findOne({ _id: orderId, user: userId });
+  const order = await Order.findOne({
+    _id: orderId,
+    user: userId,
+  });
+
   if (!order) throw new AppError("Order not found.", 404);
+
+  if (order.paymentMethod === "STRIPE") {
+    throw new AppError(
+      "Card orders can't be cancelled online yet. Please contact support.",
+      400,
+    );
+  }
 
   if (order.status !== "pending") {
     throw new AppError(
@@ -110,7 +158,6 @@ const cancelMyOrder = async (userId, orderId) => {
   order.status = "cancelled";
   await order.save();
 
-  // Give the stock back since the order never actually shipped.
   await Promise.all(
     order.items.map((item) =>
       Product.findByIdAndUpdate(item.product, {
@@ -122,4 +169,11 @@ const cancelMyOrder = async (userId, orderId) => {
   return order;
 };
 
-module.exports = { createOrder, getMyOrders, getMyOrderById, cancelMyOrder };
+module.exports = {
+  DELIVERY_FEE,
+  createOrder,
+  createStripeOrder,
+  getMyOrders,
+  getMyOrderById,
+  cancelMyOrder,
+};

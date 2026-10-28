@@ -15,7 +15,19 @@ export const getMyOrderByIdAPI = async (id) => {
   return data.order;
 };
 
+export const verifyPaymentAPI = async (orderId) => {
+  const { data } = await api.get(`/payments/verify/${orderId}`);
+  return data.order;
+};
+
 export const cancelMyOrderAPI = async (id) => {
   const { data } = await api.put(`/orders/${id}/cancel`);
   return data.order;
+};
+
+export const createCheckoutSessionAPI = async (shippingAddress) => {
+  const { data } = await api.post("/payments/checkout-session", {
+    shippingAddress,
+  });
+  return data.url;
 };

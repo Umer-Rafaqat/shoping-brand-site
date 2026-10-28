@@ -5,11 +5,11 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const AppError = require("../utils/AppError");
 const { searchRegex } = require("../utils/queryHelpers");
-
+const stripe = require("../config/stripe");
+const { settledOrdersFilter } = require("../utils/orderFilters");
 const populateRole = (query) => query.populate("role");
 
 const getAllUsers = async ({ page, limit, skip, search, excludeId }) => {
-  // Never show the logged-in admin their own account in this list.
   const filter = { _id: { $ne: excludeId } };
 
   if (search) {
@@ -34,10 +34,18 @@ const getAllUsers = async ({ page, limit, skip, search, excludeId }) => {
 // New admins only ever come from scripts/makeAdmin.js.
 const createUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
+
   if (existing) throw new AppError("Email already in use.", 409);
 
   const userRole = await Role.findOrCreate("user");
-  const user = await User.create({ name, email, password, role: userRole._id });
+
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role: userRole._id,
+  });
+
   await user.populate("role");
 
   return user.toPublicJSON();
@@ -45,15 +53,14 @@ const createUser = async ({ name, email, password }) => {
 
 const getUserById = async (id) => {
   const user = await populateRole(User.findById(id));
+
   if (!user) throw new AppError("User not found.", 404);
 
   return user.toPublicJSON();
 };
-
-// Edit name/email only — role is never accepted here. Admin accounts are also
-// off-limits: an admin can only manage regular users through this panel.
 const updateUser = async (id, { name, email }) => {
   const target = await populateRole(User.findById(id));
+
   if (!target) throw new AppError("User not found.", 404);
 
   if (target.role?.name === "admin") {
@@ -61,12 +68,17 @@ const updateUser = async (id, { name, email }) => {
   }
 
   if (email && email !== target.email) {
-    const existing = await User.findOne({ email, _id: { $ne: target._id } });
+    const existing = await User.findOne({
+      email,
+      _id: { $ne: target._id },
+    });
+
     if (existing) throw new AppError("Email already in use.", 409);
   }
 
   if (name !== undefined) target.name = name;
   if (email !== undefined) target.email = email;
+
   await target.save();
 
   return target.toPublicJSON();
@@ -78,6 +90,7 @@ const deleteUser = async (id, requestingUserId) => {
   }
 
   const target = await populateRole(User.findById(id));
+
   if (!target) throw new AppError("User not found.", 404);
 
   if (target.role?.name === "admin") {
@@ -94,13 +107,19 @@ const getAllCartActivity = async ({ page, limit, skip }) => {
     .lean();
 
   const rows = [];
+
   for (const cart of carts) {
-    if (!cart.user) continue; // user account may have been deleted since
+    if (!cart.user) continue;
+
     for (const item of cart.items) {
-      if (!item.product) continue; // product may have been deleted since
+      if (!item.product) continue;
+
       rows.push({
         cartItemId: item._id,
-        user: { name: cart.user.name, email: cart.user.email },
+        user: {
+          name: cart.user.name,
+          email: cart.user.email,
+        },
         product: {
           name: item.product.name,
           image: item.product.images?.[0] || "",
@@ -123,8 +142,10 @@ const getAllCartActivity = async ({ page, limit, skip }) => {
 };
 
 // ─── Orders (admin) ─────────────────────────────────────────────────────────────
+
 const getAllOrders = async ({ page, limit, skip, status }) => {
-  const filter = {};
+  const filter = { ...settledOrdersFilter };
+
   if (status) filter.status = status;
 
   const [orders, total] = await Promise.all([
@@ -144,27 +165,92 @@ const getOrderById = async (orderId) => {
   const order = await Order.findById(orderId)
     .populate("user", "name email")
     .lean();
+
   if (!order) throw new AppError("Order not found.", 404);
+
   return order;
 };
 
+const restockItems = (items) =>
+  Promise.all(
+    items.map((item) =>
+      Product.updateOne(
+        { _id: item.product },
+        { $inc: { stock: item.quantity } },
+      ),
+    ),
+  );
+
 const updateOrderStatus = async (orderId, status) => {
   const order = await Order.findById(orderId);
+
   if (!order) throw new AppError("Order not found.", 404);
 
-  if (status === "cancelled" && order.status !== "cancelled") {
-    await Promise.all(
-      order.items.map((item) =>
-        Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity },
-        }),
-      ),
+  const isStripe = order.paymentMethod === "STRIPE";
+  const isPaidStripe = isStripe && order.paymentStatus === "paid";
+
+  if (isStripe && !["paid", "refunded"].includes(order.paymentStatus)) {
+    throw new AppError(
+      "This card order hasn't been paid, so its status can't be changed.",
+      400,
     );
   }
 
-  order.status = status;
-  await order.save();
-  return order;
+  if (order.status === status) {
+    return getOrderById(orderId);
+  }
+
+  if (order.status === "cancelled") {
+    throw new AppError(
+      "Cancelled orders can't be reopened. Ask the customer to place a new order.",
+      400,
+    );
+  }
+  if (status !== "cancelled") {
+    order.status = status;
+    await order.save();
+
+    return getOrderById(orderId);
+  }
+
+  if (isPaidStripe) {
+    try {
+      await stripe.refunds.create(
+        {
+          payment_intent: order.stripePaymentIntentId,
+        },
+        {
+          idempotencyKey: `refund_${order._id}`,
+        },
+      );
+    } catch (err) {
+      console.error("Stripe refund failed:", err);
+
+      throw new AppError(
+        "Couldn't refund the payment through Stripe, so the order was not cancelled.",
+        502,
+      );
+    }
+  }
+  const cancelled = await Order.findOneAndUpdate(
+    {
+      _id: order._id,
+      status: { $ne: "cancelled" },
+    },
+    {
+      status: "cancelled",
+      ...(isPaidStripe && { paymentStatus: "refunded" }),
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (cancelled) {
+    await restockItems(order.items);
+  }
+
+  return getOrderById(orderId);
 };
 
 module.exports = {

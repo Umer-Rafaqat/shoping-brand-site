@@ -14,6 +14,8 @@ const productRoutes = require("./routes/product.routes");
 const categoryRoutes = require("./routes/category.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
+const paymentRoutes = require("./routes/payment.routes");
+const { stripeWebhook } = require("./controllers/payment.controller");
 
 const app = express();
 
@@ -31,10 +33,19 @@ app.use(
   }),
 );
 
+// ─── Stripe Webhook ───────────────────────────────────────────────────────────
+// Stripe signs the RAW body, so this route must come BEFORE express.json().
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook,
+);
+
 // ─── Body / cookie parsing ────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -44,13 +55,17 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 
-// 404 handler
+// ─── 404 handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found.` });
+  res.status(404).json({
+    message: `Route ${req.originalUrl} not found.`,
+  });
 });
 
-// Global error handler — catchAsync forwards every service/controller error here.
+// ─── Global error handler ─────────────────────────────────────────────────────
+// catchAsync forwards every service/controller error here.
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     const messages = {
@@ -58,6 +73,7 @@ app.use((err, req, res, next) => {
       LIMIT_FILE_SIZE: "Each image must be 5MB or smaller.",
       LIMIT_FILE_COUNT: "You can upload at most 5 images.",
     };
+
     return res.status(400).json({
       message: messages[err.code] || "There was a problem with your upload.",
     });

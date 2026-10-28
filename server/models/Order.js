@@ -36,14 +36,19 @@ const ORDER_STATUSES = [
   "cancelled",
 ];
 
+const PAYMENT_METHODS = ["COD", "STRIPE"];
+const PAYMENT_STATUSES = ["unpaid", "paid", "failed", "refunded"];
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: Number, required: true, unique: true },
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
     items: {
       type: [orderItemSchema],
       required: true,
@@ -52,15 +57,47 @@ const orderSchema = new mongoose.Schema(
         message: "An order must have at least one item.",
       },
     },
+
     shippingAddress: { type: shippingAddressSchema, required: true },
+
     subtotal: { type: Number, required: true, min: 0 },
+
     deliveryFee: { type: Number, required: true, min: 0 },
+
+    discountAmount: { type: Number, default: 0, min: 0 },
+
+    couponCode: { type: String, default: null },
+
     totalAmount: { type: Number, required: true, min: 0 },
+
     paymentMethod: {
       type: String,
-      enum: ["COD"],
+      enum: PAYMENT_METHODS,
       default: "COD",
     },
+
+    paymentStatus: {
+      type: String,
+      enum: PAYMENT_STATUSES,
+      default: "unpaid",
+    },
+
+    stripeSessionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    stripePaymentIntentId: {
+      type: String,
+      default: null,
+    },
+
+    paidAt: {
+      type: Date,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: ORDER_STATUSES,

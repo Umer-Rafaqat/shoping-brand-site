@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/product-detail/Breadcrumb";
 import Pagination from "@/components/Pagination";
 import { getMyOrdersAPI, cancelMyOrderAPI } from "@/api/order.api";
+import PaymentBadge from "@/components/PaymentBadge";
 
 const CONTAINER = "mx-auto max-w-[1240px] px-4 lg:px-0";
 
@@ -30,6 +31,7 @@ export default function OrderHistory() {
 
   const fetchOrders = () => {
     setLoading(true);
+
     getMyOrdersAPI({ page, limit: 10 })
       .then((data) => {
         setOrders(data.orders);
@@ -42,6 +44,7 @@ export default function OrderHistory() {
 
   const handleCancel = async (orderId) => {
     setCancellingId(orderId);
+
     try {
       await cancelMyOrderAPI(orderId);
       fetchOrders();
@@ -67,6 +70,7 @@ export default function OrderHistory() {
         {justPlacedOrderNumber && (
           <div className="mb-6 flex items-center gap-3 rounded-2xl bg-emerald-50 px-5 py-4 text-emerald-700">
             <CheckCircle2 size={20} className="shrink-0" />
+
             <p className="text-sm font-medium">
               Order #{justPlacedOrderNumber} placed successfully! We'll get it
               ready for delivery.
@@ -81,9 +85,11 @@ export default function OrderHistory() {
         ) : orders.length === 0 ? (
           <div className="mb-16 flex flex-col items-center gap-3 rounded-2xl border border-black/10 py-20 text-center">
             <PackageSearch size={28} className="text-black/20" />
+
             <p className="font-satoshi text-base text-black/60">
               You haven't placed any orders yet.
             </p>
+
             <Link
               to="/"
               className="mt-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white"
@@ -101,6 +107,7 @@ export default function OrderHistory() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Order #{order.orderNumber}</p>
+
                     <p className="mt-0.5 text-xs text-black/40">
                       {new Date(order.createdAt).toLocaleDateString(undefined, {
                         year: "numeric",
@@ -109,11 +116,16 @@ export default function OrderHistory() {
                       })}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_STYLES[order.status]}`}
-                  >
-                    {order.status}
-                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <PaymentBadge order={order} />
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_STYLES[order.status]}`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="my-4 border-t border-black/10" />
@@ -123,19 +135,33 @@ export default function OrderHistory() {
                     {order.items.length} item
                     {order.items.length > 1 ? "s" : ""} · ${order.totalAmount}
                   </p>
-                  {order.status === "pending" && (
-                    <button
-                      type="button"
-                      onClick={() => handleCancel(order._id)}
-                      disabled={cancellingId === order._id}
-                      className="text-xs font-medium text-red-500 hover:text-red-600 disabled:opacity-50"
-                    >
-                      {cancellingId === order._id
-                        ? "Cancelling..."
-                        : "Cancel Order"}
-                    </button>
-                  )}
+
+                  {order.paymentMethod === "COD" &&
+                    order.status === "pending" && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancel(order._id)}
+                        disabled={cancellingId === order._id}
+                        className="text-xs font-medium text-red-500 hover:text-red-600 disabled:opacity-50"
+                      >
+                        {cancellingId === order._id
+                          ? "Cancelling..."
+                          : "Cancel Order"}
+                      </button>
+                    )}
                 </div>
+
+                {order.discountAmount > 0 && (
+                  <div className="mt-2 flex items-center justify-between text-sm text-emerald-700">
+                    <span>
+                      Discount
+                      {order.couponCode && ` (${order.couponCode})`}
+                    </span>
+                    <span className="font-medium">
+                      -${order.discountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

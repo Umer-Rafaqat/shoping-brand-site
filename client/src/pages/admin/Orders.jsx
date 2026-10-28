@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, PackageSearch } from "lucide-react";
 import { getAllOrdersAPI } from "@/api/admin.api";
 import Pagination from "@/components/Pagination";
+import PaymentBadge from "@/components/PaymentBadge";
 
 const STATUS_OPTIONS = [
   "",
@@ -33,6 +34,7 @@ export default function Orders() {
   useEffect(() => {
     setLoading(true);
     setError("");
+
     getAllOrdersAPI({ page, limit: 10, status: statusFilter })
       .then((data) => {
         setOrders(data.orders);
@@ -84,36 +86,46 @@ export default function Orders() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="border-b border-black/10 text-xs uppercase tracking-wide text-black/40">
                 <tr>
                   <th className="px-5 py-3 font-medium">Order</th>
                   <th className="px-5 py-3 font-medium">Customer</th>
                   <th className="px-5 py-3 font-medium">Items</th>
                   <th className="px-5 py-3 font-medium">Total</th>
+                  <th className="px-5 py-3 font-medium">Payment</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Date</th>
                   <th className="px-5 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-black/5">
                 {orders.map((order) => (
                   <tr key={order._id}>
                     <td className="px-5 py-3 font-medium">
                       #{order.orderNumber}
                     </td>
+
                     <td className="px-5 py-3">
                       <p className="font-medium">{order.user?.name}</p>
                       <p className="text-xs text-black/40">
                         {order.user?.email}
                       </p>
                     </td>
+
                     <td className="px-5 py-3 text-black/60">
                       {order.items.length}
                     </td>
+
                     <td className="px-5 py-3 text-black/60">
                       ${order.totalAmount}
                     </td>
+
+                    <td className="px-5 py-3">
+                      <PaymentBadge order={order} />
+                    </td>
+
                     <td className="px-5 py-3">
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${STATUS_STYLES[order.status]}`}
@@ -121,9 +133,11 @@ export default function Orders() {
                         {order.status}
                       </span>
                     </td>
+
                     <td className="px-5 py-3 text-black/60">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
+
                     <td className="px-5 py-3">
                       <div className="flex justify-end">
                         <button
